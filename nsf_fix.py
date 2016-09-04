@@ -1,49 +1,38 @@
-class rndType(enumerate):
-    """Round type class.
-
-    Define common numbers round methods.
-
-    """
-    # Raw truncation
-    Trunc = 1
-    # Positive numbers tend to inf, negative ones to -inf
-    SymInf = 2
-    # Numbers tend toward zero
-    SymZero = 3
-    # Positive and negat
-    NonSymPos = 4
-    NonSymNeg = 5
-    ConvEven = 6
-    ConvOdd = 7
-    Floor = 8
-    Ceil = 9
+import nsf_fix_util as fu
 
 
-class satType(enumerate):
+class FixNum:
+    """Fixed point number class
 
-    Sat = 1
-    Wrap = 2
-
-
-class NsfFix:
-    """Class definition
+    :param value: value to represent in fix point
+    :type value: float
+    :param fmt: fix point format
+    :type fmt: FixFmt
+    :return: fixed point object
+    :rtype: NsfFix
     """
 
     def __init__(self,
                  value,
-                 fixFmt,
-                 rndMode: rndType = 'NonSymPos',
-                 satMode: satType = 'Sat'):
-        self._value = value
-        self._fixFmt = fixFmt
-        self._rndMode = rndMode
-        self._satMode = satMode
+                 fmt: fu.FixFmt,
+                 rnd=fu.rndType.NonSymPos,
+                 sat=fu.satType.Sat):
+        self._value = value  # todo: should be directly converted
+        self._fmt = fmt
+        self._rnd = rnd
+        self._sat = sat
 
     # methods
+    def __str__(self):
+        return """
+        """ + str(self._value) + """
+        format: """ + str(self._fmt) + """
+        round: """ + self._rnd.name + """
+        saturate: """ + self._sat.name
+
     def get_fmt(self):
-        return self._fixFmt
+        return self._fmt
 
     # operators
     def __add__(self, other):
         pass
-
