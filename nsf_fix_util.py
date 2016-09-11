@@ -15,17 +15,8 @@ class FixFmt:
            + str(self.intBits) + "," \
            + str(self.fracBits) + ")"
 
-    # def signed(self):
-    #     return self._signed
-
-    # def intBits(self):
-    #     return self._intBits
-
-    # def fracBits(self):
-    #     return self._fracBits
-
     def bit_length(self):
-        return int(self._signed) \
+        return int(self.signed) \
             + self.intBits \
             + self.fracBits
 
