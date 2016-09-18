@@ -51,29 +51,37 @@ class FixNum:
 
         # round
         if rnd == "SymInf":
-            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
-                               v*2**fmt.fracBits-0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits+0.5 if v > 0 else
+                               int(v)*2**fmt.fracBits-0.5 for v in value],
+                              atype)
         elif rnd == "SymZero":
-            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
-                               v*2**fmt.fracBits+0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits-0.5 if v > 0 else
+                               int(v)*2**fmt.fracBits+0.5 for v in value],
+                              atype)
         elif rnd == "NonSymPos":
-            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
-                               v*2**fmt.fracBits+0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits+0.5 if v > 0 else
+                               int(v)*2**fmt.fracBits+0.5 for v in value],
+                              atype)
         elif rnd == "NonSymNeg":
-            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
-                               v*2**fmt.fracBits-0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits-0.5 if v > 0 else
+                               int(v)*2**fmt.fracBits-0.5 for v in value],
+                              atype)
         elif rnd == "ConvEven":
-            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 == 0 else
-                               v*2**fmt.fracBits+0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits if int(v) % 2 == 0 else
+                               int(v)*2**fmt.fracBits+0.5 for v in value],
+                              atype)
         elif rnd == "ConvOdd":
-            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 != 0 else
-                              v*2**fmt.fracBits+0.5 for v in value], atype)
+            fixVal = np.array([int(v)*2**fmt.fracBits if int(v) % 2 != 0 else
+                               int(v)*2**fmt.fracBits+0.5 for v in value],
+                              atype)
         elif rnd == "Floor":
-            fixVal = np.floor(value)
+            fixVal = np.array([np.floor(int(v)*2**fmt.fracBits) for v in
+                               value], atype)
         elif rnd == "Ceil":
-            fixVal = np.ceil(value)
+            fixVal = np.array([np.ceil(int(v)*2**fmt.fracBits) for v in value],
+                              atype)
         else:
-            raise NameError("###Err###: %r is not valid round value.")
+            raise NameError("###Err###: %r is not valid round value." % rnd)
 
         # check overflow
         if over == "Sat":
@@ -89,6 +97,9 @@ class FixNum:
         elif over == "Wrap":
             bitSel = 2**(fmt.bit_length())-1
             fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
+        else:
+            raise NameError("###Err###: %r is not valid overflow value."
+                            % over)
 
         self.value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
         self.fmt = fmt
@@ -102,6 +113,15 @@ class FixNum:
         format: """ + str(self.fmt) + """
         round: """ + self.rnd + """
         saturate: """ + self.over
+
+    def __repr__(self):
+        return """
+        """ + str(self.value) + """
+        format: """ + str(self.fmt) + """
+        round: """ + self.rnd + """
+        saturate: """ + self.over + """
+
+        <nsf_fix.FixNum at """ + hex(id(self)) + '>'
 
     def get_fmt(self):
         return self.fmt
