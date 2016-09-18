@@ -42,7 +42,7 @@ class FixNum:
             value = np.array(value) if isinstance(value, list) \
                     else np.array([value])  # prevent 0 dimension array
 
-        # turn input into 1D array
+        # turn input into 1D array (to allow iteration through out all values)
         shape = value.shape
         value = np.reshape(value, -1)
 
@@ -51,35 +51,28 @@ class FixNum:
 
         # round
         if rnd == "SymInf":
-            fixVal = np.array([int(v)*2**fmt.fracBits+0.5 if v > 0 else
-                               int(v)*2**fmt.fracBits-0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
+                               v*2**fmt.fracBits-0.5 for v in value])
         elif rnd == "SymZero":
-            fixVal = np.array([int(v)*2**fmt.fracBits-0.5 if v > 0 else
-                               int(v)*2**fmt.fracBits+0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
+                               v*2**fmt.fracBits+0.5 for v in value])
         elif rnd == "NonSymPos":
-            fixVal = np.array([int(v)*2**fmt.fracBits+0.5 if v > 0 else
-                               int(v)*2**fmt.fracBits+0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
+                               v*2**fmt.fracBits+0.5 for v in value])
         elif rnd == "NonSymNeg":
-            fixVal = np.array([int(v)*2**fmt.fracBits-0.5 if v > 0 else
-                               int(v)*2**fmt.fracBits-0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
+                               v*2**fmt.fracBits-0.5 for v in value])
         elif rnd == "ConvEven":
-            fixVal = np.array([int(v)*2**fmt.fracBits if int(v) % 2 == 0 else
-                               int(v)*2**fmt.fracBits+0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 == 0 else
+                               v*2**fmt.fracBits+0.5 for v in value])
         elif rnd == "ConvOdd":
-            fixVal = np.array([int(v)*2**fmt.fracBits if int(v) % 2 != 0 else
-                               int(v)*2**fmt.fracBits+0.5 for v in value],
-                              atype)
+            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 != 0 else
+                               v*2**fmt.fracBits+0.5 for v in value])
         elif rnd == "Floor":
-            fixVal = np.array([np.floor(int(v)*2**fmt.fracBits) for v in
+            fixVal = np.array([np.floor(v*2**fmt.fracBits) for v in
                                value], atype)
         elif rnd == "Ceil":
-            fixVal = np.array([np.ceil(int(v)*2**fmt.fracBits) for v in value],
-                              atype)
+            fixVal = np.array([np.ceil(v*2**fmt.fracBits) for v in value])
         else:
             raise NameError("###Err###: %r is not valid round value." % rnd)
 
