@@ -1,5 +1,4 @@
 import nsf_fix_util as fu
-import math
 import numpy as np
 
 
@@ -21,7 +20,7 @@ class FixNum:
     Wrap : wrap around
 
     :param value: value to represent in fix point
-    :type value: float
+    :type value: np.ndarray(ndim > 0), float
     :param fmt: fix point format
     :type fmt: FixFmt
     :param rnd: round method
@@ -40,11 +39,12 @@ class FixNum:
 
         # cast to np is necessary
         if type(value) is not np.ndarray:
-            value = np.ndarray(value)  # it might be just a float, hence dim 0
+            value = np.array(value) if isinstance(value, list) \
+                    else np.array([value])  # prevent 0 dimension array
 
-        # make input matrix rank greater than 0
-        if value.ndim == 0:
-            value = np.ndarray([value])  # ensure 'value' being iterable
+        # turn input into 1D array
+        shape = value.shape
+        value = np.reshape(value, -1)
 
         # select array type
         atype = np.int64 if fmt.signed else np.uint64
@@ -89,9 +89,10 @@ class FixNum:
                     min(f, 2**(fmt.bit_length())-1), 0)
                                    for f in fixVal], atype)
         elif over == "Wrap":
-            bitSel = 2**(fmt.bit_length())
+            bitSel = 2**(fmt.bit_length())-1
+            fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
 
-        self._value = fixVal*2.**(-fmt.fracBits)
+        self._value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
         self._fmt = fmt
         self._rnd = rnd
         self._sat = over
