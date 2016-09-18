@@ -7,10 +7,12 @@
 # - signed fmt: (t,0,15)
 # - unsigned fmt: (f,0,16)
 import glob
-import numpy as np
 import os
 import sys
 sys.path.append('..')
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 import nsf_fix as fi
 import nsf_fix_util as fu
@@ -27,7 +29,7 @@ for filename in tst_file_lst_u:
     with open(filename, 'r') as f:
         (name, extension) = os.path.splitext(filename)
         # remove new line characters
-        num_lst_u[name] = [k.rstrip() for k in f.readlines()]
+        num_lst_u[name] = [np.float(k.rstrip()) for k in f.readlines()]
 
 print("\t...complete")
 
@@ -37,7 +39,7 @@ for filename in tst_file_lst_s:
     with open(filename, 'r') as f:
         (name, extension) = os.path.splitext(filename)
         # remove new line characters
-        num_lst_s[name] = [k.rstrip() for k in f.readlines()]
+        num_lst_s[name] = [np.float(k.rstrip()) for k in f.readlines()]
 
 print("\t...complete")
 
@@ -80,3 +82,19 @@ for fimath in num_lst_s.keys():
                                   fimath_dict[split_key[-1]])  # overflow
 
 print("\t...complete")
+
+# compare the two representations
+results_u = {key: 'correct' if False not in
+             (fix_lst_u[key].value == num_lst_u[key]) else 'wrong'
+             for key in fix_lst_u.keys()}
+
+results_s = {key: 'correct' if False not in
+             (fix_lst_s[key].value == num_lst_s[key]) else 'wrong'
+             for key in fix_lst_s.keys()}
+
+# plot all fix lists
+# keys_u = tuple(fix_lst_u)
+# plt.plot(u_series, fix_lst_u[keys_u[0]].value,
+#          u_series, fix_lst_u[keys_u[1]].value,
+#          u_series, fix_lst_u[keys_u[2]].value)
+# plt.title(keys_u[0] + ' ' + keys_u[1] + ' ' + keys_u[2])
