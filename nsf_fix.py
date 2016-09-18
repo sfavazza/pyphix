@@ -78,8 +78,6 @@ class FixNum:
         # check overflow
         if over == "Sat":
             if fmt.signed:
-                # fixVal = max(min(fixVal, 2**(fmt.bit_length()-1)-1),
-                #              -2**(fmt.bit_length()-1))
                 fixVal = np.array(
                     [max(
                         min(f, 2**(fmt.bit_length()-1)-1),
@@ -92,21 +90,21 @@ class FixNum:
             bitSel = 2**(fmt.bit_length())-1
             fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
 
-        self._value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
-        self._fmt = fmt
-        self._rnd = rnd
-        self._sat = over
+        self.value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
+        self.fmt = fmt
+        self.rnd = rnd
+        self.over = over
 
     # methods
     def __str__(self):
         return """
-        """ + str(self._value) + """
-        format: """ + str(self._fmt) + """
-        round: """ + self._rnd + """
-        saturate: """ + self._sat
+        """ + str(self.value) + """
+        format: """ + str(self.fmt) + """
+        round: """ + self.rnd + """
+        saturate: """ + self.over
 
     def get_fmt(self):
-        return self._fmt
+        return self.fmt
 
     # operators
     def __add__(self, other):
