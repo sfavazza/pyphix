@@ -77,7 +77,8 @@ class FixNum:
                                v*2**fmt.fracBits+.4 if v > 0 else
                                v*2**fmt.fracBits-.4 for v in value])
         elif rnd == "Floor":
-            fixVal = np.array([np.floor(v*2**fmt.fracBits) for v in
+            # not merhely floor function as symmetric in both directions
+            fixVal = np.array([int(v*2**fmt.fracBits) for v in
                                value])
         elif rnd == "Ceil":
             fixVal = np.array([np.ceil(v*2**fmt.fracBits) for v in value])
