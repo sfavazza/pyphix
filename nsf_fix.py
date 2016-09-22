@@ -51,26 +51,34 @@ class FixNum:
 
         # round
         if rnd == "SymInf":
-            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
-                               v*2**fmt.fracBits-0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.5 if v > 0 else
+                               v*2**fmt.fracBits-.5 for v in value])
         elif rnd == "SymZero":
-            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
-                               v*2**fmt.fracBits+0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.4 if v > 0 else
+                               v*2**fmt.fracBits-.4 for v in value])
         elif rnd == "NonSymPos":
-            fixVal = np.array([v*2**fmt.fracBits+0.5 if v > 0 else
-                               v*2**fmt.fracBits+0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.5 if v > 0 else
+                               v*2**fmt.fracBits-.4 for v in value])
         elif rnd == "NonSymNeg":
-            fixVal = np.array([v*2**fmt.fracBits-0.5 if v > 0 else
-                               v*2**fmt.fracBits-0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.4 if v > 0 else
+                               v*2**fmt.fracBits-.5 for v in value])
         elif rnd == "ConvEven":
-            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 == 0 else
-                               v*2**fmt.fracBits+0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.4 if (v >= 0) and
+                               int(v) % 2 == 0 else
+                               v*2**fmt.fracBits-.4 if (v < 0) and
+                               int(v) % 2 == 0 else
+                               v*2**fmt.fracBits+.5 if v > 0 else
+                               v*2**fmt.fracBits-.5 for v in value])
         elif rnd == "ConvOdd":
-            fixVal = np.array([v*2**fmt.fracBits if int(v) % 2 != 0 else
-                               v*2**fmt.fracBits+0.5 for v in value])
+            fixVal = np.array([v*2**fmt.fracBits+.5 if (v >= 0) and
+                               int(v) % 2 == 0 else
+                               v*2**fmt.fracBits-.5 if (v < 0) and
+                               int(v) % 2 == 0 else
+                               v*2**fmt.fracBits+.4 if v > 0 else
+                               v*2**fmt.fracBits-.4 for v in value])
         elif rnd == "Floor":
             fixVal = np.array([np.floor(v*2**fmt.fracBits) for v in
-                               value], atype)
+                               value])
         elif rnd == "Ceil":
             fixVal = np.array([np.ceil(v*2**fmt.fracBits) for v in value])
         else:
