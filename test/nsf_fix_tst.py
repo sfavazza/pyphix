@@ -44,8 +44,8 @@ for filename in tst_file_lst_s:
 print("\t...complete")
 
 # Create value series for test
-u_series = np.linspace(-.2, 1.2, 2**20-1)
-s_series = np.linspace(-1.2, 1.2, 2**20-1)
+u_series = np.linspace(-.2, 1.2, 2**18-1)
+s_series = np.linspace(-1.2, 1.2, 2**18-1)
 
 # Define nsf_fix dicts
 fix_lst_u = {}
@@ -56,9 +56,9 @@ s_16 = fu.FixFmt(True, 0, 16)
 
 # Define fimath correspondence between matlab and nsf_fix
 fimath_dict = {'ceil': 'Ceil',
-               'convergent': 'ConvEven',
-               'fix': 'SymZero',
-               'floor': 'Floor',
+               'convergent': 'ConvOdd',
+               'fix': 'Floor',
+               'floor': 'NonSymNeg',
                'nearest': 'NonSymPos',
                'round': 'SymInf',
                'saturate': 'Sat',
