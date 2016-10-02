@@ -8,6 +8,7 @@
 # - unsigned fmt: (f,0,16)
 import glob
 import os
+import re
 import sys
 sys.path.append('..')
 
@@ -17,8 +18,28 @@ import matplotlib.pyplot as plt
 import nsf_fix as fi
 import nsf_fix_util as fu
 
+# list test set files
 tst_file_lst_u = glob.glob('u_*.txt')
 tst_file_lst_s = glob.glob('s_*.txt')
+tst_file_lst_u.remove('u_src.txt')
+tst_file_lst_s.remove('s_src.txt')
+
+# Read value series for test
+with open('u_src.txt', 'r') as f:
+    u_series = np.array([np.float(k.rstrip()) for k in f.readlines()])
+with open('s_src.txt', 'r') as f:
+    s_series = np.array([np.float(k.rstrip()) for k in f.readlines()])
+
+# filter only values that when converted in fix point arithmetic has first
+# digit after point equal to 5
+u_series_str = [str(k*2**16) for k in u_series]
+s_series_str = [str(k*2**16) for k in s_series]
+u_idx_05 = [el for el in range(0, len(u_series_str))
+            if re.search('\.5', u_series_str[el]) is not None]
+s_idx_05 = [el for el in range(0, len(s_series_str))
+            if re.search('\.5', s_series_str[el]) is not None]
+u_series = u_series[u_idx_05]
+s_series = s_series[s_idx_05]
 
 # Define matlab dicts
 num_lst_u = {}
@@ -29,37 +50,38 @@ for filename in tst_file_lst_u:
     with open(filename, 'r') as f:
         (name, extension) = os.path.splitext(filename)
         # remove new line characters
-        num_lst_u[name] = [np.float(k.rstrip()) for k in f.readlines()]
+        num_lst_u[name] = np.array([np.float(k.rstrip())
+                                    for k in f.readlines()])
+        num_lst_u[name] = num_lst_u[name][u_idx_05]
 
 print("\t...complete")
 
 # Read from text files signed
-print("INFO: Read unsigned value series files...")
+print("INFO: Read signed value series files...")
 for filename in tst_file_lst_s:
     with open(filename, 'r') as f:
         (name, extension) = os.path.splitext(filename)
         # remove new line characters
-        num_lst_s[name] = [np.float(k.rstrip()) for k in f.readlines()]
+        num_lst_s[name] = np.array([np.float(k.rstrip())
+                                    for k in f.readlines()])
+        num_lst_s[name] = num_lst_s[name][s_idx_05]
 
 print("\t...complete")
 
-# Create value series for test
-u_series = np.linspace(-.2, 1.2, 2**18-1)
-s_series = np.linspace(-1.2, 1.2, 2**18-1)
+
+u_16 = fu.FixFmt(False, 0, 16)
+s_16 = fu.FixFmt(True, 0, 15)
 
 # Define nsf_fix dicts
 fix_lst_u = {}
 fix_lst_s = {}
 
-u_16 = fu.FixFmt(False, 0, 16)
-s_16 = fu.FixFmt(True, 0, 16)
-
 # Define fimath correspondence between matlab and nsf_fix
 fimath_dict = {'ceil': 'Ceil',
-               'convergent': 'ConvOdd',
-               'fix': 'Floor',
-               'floor': 'NonSymNeg',
-               'nearest': 'NonSymPos',
+               'convergent': 'ConvOdd',  # never met
+               'fix': 'SymZero',
+               'floor': 'Floor',      # NonSymNeg
+               'nearest': 'NonSymPos',  # ConvEven
                'round': 'SymInf',
                'saturate': 'Sat',
                'wrap': 'Wrap'}
@@ -92,9 +114,3 @@ results_s = {key: 'correct' if False not in
              (fix_lst_s[key].value == num_lst_s[key]) else 'wrong'
              for key in fix_lst_s.keys()}
 
-# plot all fix lists
-# keys_u = tuple(fix_lst_u)
-# plt.plot(u_series, fix_lst_u[keys_u[0]].value,
-#          u_series, fix_lst_u[keys_u[1]].value,
-#          u_series, fix_lst_u[keys_u[2]].value)
-# plt.title(keys_u[0] + ' ' + keys_u[1] + ' ' + keys_u[2])
