@@ -64,25 +64,25 @@ class FixNum:
             fixVal = np.array([v+.4 if v > 0 else
                                v-.5 for v in value])
         elif rnd == "ConvEven":
-            fixVal = np.array([v*2**fmt.fracBits+.4 if (v >= 0) and
+            fixVal = np.array([v+.4 if (v >= 0) and
                                int(v) % 2 == 0 else
-                               v*2**fmt.fracBits-.4 if (v < 0) and
+                               v-.4 if (v < 0) and
                                int(v) % 2 == 0 else
-                               v*2**fmt.fracBits+.5 if v > 0 else
-                               v*2**fmt.fracBits-.5 for v in value])
+                               v+.5 if v > 0 else
+                               v-.5 for v in value])
         elif rnd == "ConvOdd":
-            fixVal = np.array([v*2**fmt.fracBits+.5 if (v >= 0) and
-                               int(v) % 2 == 0 else
-                               v*2**fmt.fracBits-.5 if (v < 0) and
-                               int(v) % 2 == 0 else
-                               v*2**fmt.fracBits+.4 if v > 0 else
-                               v*2**fmt.fracBits-.4 for v in value])
+            fixVal = np.array([v+.5 if (v >= 0) and
+                               (int(v) % 2 == 0) else
+                               v-.5 if (v < 0) and
+                               (int(v) % 2 == 0) else
+                               v+.4 if v > 0 else
+                               v-.4 for v in value])
         elif rnd == "Floor":
             # not merhely floor function as symmetric in both directions
-            fixVal = np.array([int(v*2**fmt.fracBits) for v in
+            fixVal = np.array([int(v) for v in
                                value])
         elif rnd == "Ceil":
-            fixVal = np.array([np.ceil(v*2**fmt.fracBits) for v in value])
+            fixVal = np.array([np.ceil(v) for v in value])
         else:
             raise NameError("###Err###: %r is not valid round value." % rnd)
 
