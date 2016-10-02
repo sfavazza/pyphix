@@ -131,7 +131,10 @@ class FixNum:
 
     # operators
     def __add__(self, other):
-        return NotImplemented
+        return self.value + other
+
+    def __radd__(self, other):
+        return self.value + other
 
     def __sub__(self):
         return NotImplemented

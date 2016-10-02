@@ -15,6 +15,12 @@ class FixFmt:
            + str(self.intBits) + "," \
            + str(self.fracBits) + ")"
 
+    def __repr__(self):
+        return "(" + str(self.signed) + "," \
+           + str(self.intBits) + "," \
+           + str(self.fracBits) + ")\n\n" \
+           + "<nsf_fix_util.FixFmt at " + hex(id(self)) + '>'
+
     def bit_length(self):
         return int(self.signed) \
             + self.intBits \
