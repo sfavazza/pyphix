@@ -45,23 +45,24 @@ class FixNum:
         # turn input into 1D array (to allow iteration through out all values)
         shape = value.shape
         value = np.reshape(value, -1)
+        value = value*2**fmt.fracBits
 
         # select array type
         atype = np.int64 if fmt.signed else np.uint64
 
         # round
         if rnd == "SymInf":
-            fixVal = np.array([v*2**fmt.fracBits+.5 if v > 0 else
-                               v*2**fmt.fracBits-.5 for v in value])
+            fixVal = np.array([v+.5 if v > 0 else
+                               v-.5 for v in value])
         elif rnd == "SymZero":
-            fixVal = np.array([v*2**fmt.fracBits+.4 if v > 0 else
-                               v*2**fmt.fracBits-.4 for v in value])
+            fixVal = np.array([v+.4 if v > 0 else
+                               v-.4 for v in value])
         elif rnd == "NonSymPos":
-            fixVal = np.array([v*2**fmt.fracBits+.5 if v > 0 else
-                               v*2**fmt.fracBits-.4 for v in value])
+            fixVal = np.array([v+.5 if v > 0 else
+                               v-.4 for v in value])
         elif rnd == "NonSymNeg":
-            fixVal = np.array([v*2**fmt.fracBits+.4 if v > 0 else
-                               v*2**fmt.fracBits-.5 for v in value])
+            fixVal = np.array([v+.4 if v > 0 else
+                               v-.5 for v in value])
         elif rnd == "ConvEven":
             fixVal = np.array([v*2**fmt.fracBits+.4 if (v >= 0) and
                                int(v) % 2 == 0 else
