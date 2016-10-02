@@ -99,7 +99,16 @@ class FixNum:
                                    for f in fixVal], atype)
         elif over == "Wrap":
             bitSel = 2**(fmt.bit_length())-1
-            fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
+            if fmt.signed:
+                compl2s = np.array([int(f) & bitSel for f in fixVal], atype)
+                fixVal = np.array([
+                    # if non negative
+                    int(f) if int(f) & 2**(fmt.bit_length()-1) == 0
+                    # if negative make 2's complement and restore negative sign
+                    else -((~f + 1) & bitSel) for f in compl2s],
+                                  atype)
+            else:
+                fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
         else:
             raise NameError("###Err###: %r is not valid overflow value."
                             % over)
