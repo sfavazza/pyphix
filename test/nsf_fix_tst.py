@@ -1,7 +1,7 @@
 # ## Compare fix number against commercial matlab data series
 # # Test conditions
 #
-# - 2^20-1 values
+# - 2^18-1 values
 # - signed interval: -1.2 to 1.2
 # - unsigned interval: -0.2 to 1.2
 # - signed fmt: (t,0,15)
