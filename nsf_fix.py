@@ -119,6 +119,12 @@ class FixNum:
         self.over = over
 
     # methods
+
+    def change_fix(self, newFmt, newRnd, newOver):
+        '''Return input FixNum object expressed with passed:
+        format, round method and overflow method'''
+        return FixNum(self.value, newFmt, newRnd, newOver)
+
     def __str__(self):
         return """
         """ + str(self.value) + """
