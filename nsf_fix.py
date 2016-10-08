@@ -169,8 +169,35 @@ class FixNum:
     def __radd__(self, other):
         return self.value + other
 
-    def __sub__(self):
+    def __sub__(self, other):
         return NotImplemented
 
-    def __mul__(self):
+    def sub(self, other):
         return NotImplemented
+
+    def __mul__(self, other):
+        tmpVal = self.value * other.value
+        tmpSign = max(self.fmt.signed, other.fmt.signed)
+        tmpFmt = fu.FixFmt(tmpSign,
+                           self.fmt.intBits + other.fmt.intBits + 1 if
+                           tmpSign else self.fmt.intBits + other.fmt.intBits,
+                           self.fmt.fracBits + other.fmt.fracBits)
+        if (self.rnd != other.rnd) or (self.over != other.over):
+            print('_WARNING_: operators have round and / or overflow methods \
+            not equal, those of first operator will be considered')
+        return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
+
+    def mult(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
+        '''
+        Multiply method.
+        It allows to decide output format.
+        If not indicated, full-precision format will be adopted
+        '''
+        tmpVal = self.value * other.value
+        tmpSign = max(self.fmt.signed, other.fmt.signed)
+        tmpFmt = fu.FixFmt(tmpSign,
+                           self.fmt.intBits + other.fmt.intBits + 1 if
+                           tmpSign else self.fmt.intBits + other.fmt.intBits,
+                           self.fmt.fracBits + other.fmt.fracBits
+                           ) if outFmt is None else outFmt
+        return FixNum(tmpVal, tmpFmt, outRnd, outOver)
