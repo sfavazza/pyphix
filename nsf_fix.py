@@ -84,7 +84,7 @@ class FixNum:
         elif rnd == "Ceil":
             fixVal = np.array([np.ceil(v) for v in value])
         else:
-            raise NameError("###Err###: %r is not valid round value." % rnd)
+            raise NameError("_ERROR_: %r is not valid round value." % rnd)
 
         # check overflow
         if over == "Sat":
@@ -110,7 +110,7 @@ class FixNum:
             else:
                 fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
         else:
-            raise NameError("###Err###: %r is not valid overflow value."
+            raise NameError("_ERROR_: %r is not valid overflow value."
                             % over)
 
         self.value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
