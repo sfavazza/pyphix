@@ -8,7 +8,7 @@ class FixNum:
     Round methods:
     SymInf    : positive numbers tends to +inf, negative numbers to -inf
     SymZero   : round toward zero
-    NonSymPos : round toward +inf
+    NonSymPos : round toward +inf -- DEFAULT
     NonSymNeg : round toward -inf
     ConvEven  : round to closest even
     ConvOdd   : round to closest odd
@@ -16,7 +16,7 @@ class FixNum:
     Ceil      : round to smallest following
 
     Saturation method
-    Sat  : saturate
+    Sat  : saturate -- DEFAULT
     Wrap : wrap around
 
     :param value: value to represent in fix point
@@ -34,8 +34,8 @@ class FixNum:
     def __init__(self,
                  value,
                  fmt: fu.FixFmt,
-                 rnd="NonSymPos",
-                 over="Sat"):
+                 rnd="SymZero",
+                 over="Wrap"):
 
         # cast to np is necessary
         if type(value) is not np.ndarray:
