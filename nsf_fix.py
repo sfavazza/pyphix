@@ -148,18 +148,16 @@ class FixNum:
         tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
                            max(self.fmt.intBits, other.fmt.intBits)+1,
                            max(self.fmt.fracBits, other.fmt.fracBits))
-        tmpRnd = self.rnd
-        tmpOver = self.over
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods \
             not equal, those of first operator will be considered')
-        return FixNum(tmpVal, tmpFmt, tmpRnd, tmpOver)
+        return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
         '''
         Addition method.
         It allows to decide output format.
-        If not indicated, full-precision format will be adopte
+        If not indicated, full-precision format will be adopted
         '''
         tmpVal = self.value + other.value
         tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
