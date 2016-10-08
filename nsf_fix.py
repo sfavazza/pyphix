@@ -135,12 +135,32 @@ class FixNum:
 
         <nsf_fix.FixNum at """ + hex(id(self)) + '>'
 
-    def get_fmt(self):
-        return self.fmt
-
     # operators
+
     def __add__(self, other):
-        return self.value + other
+        tmpVal = self.value + other.value
+        tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
+                           max(self.fmt.intBits, other.fmt.intBits)+1,
+                           max(self.fmt.fracBits, other.fmt.fracBits))
+        tmpRnd = self.rnd
+        tmpOver = self.over
+        if (self.rnd != other.rnd) or (self.over != other.over):
+            print('_WARNING_: operators have round and / or overflow methods \
+            not equal, those of first operator will be considered')
+        return FixNum(tmpVal, tmpFmt, tmpRnd, tmpOver)
+
+    def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
+        '''
+        Addition method.
+        It allows to decide output format.
+        If not indicated, full-precision format will be adopte
+        '''
+        tmpVal = self.value + other.value
+        tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
+                           max(self.fmt.intBits, other.fmt.intBits)+1,
+                           max(self.fmt.fracBits, other.fmt.fracBits)
+                           ) if outFmt is None else outFmt
+        return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     def __radd__(self, other):
         return self.value + other
