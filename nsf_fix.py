@@ -125,6 +125,22 @@ class FixNum:
         format, round method and overflow method'''
         return FixNum(self.value, newFmt, newRnd, newOver)
 
+    def bin(self):
+        shape = self.value.shape
+        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
+        bitSel = 2**(self.fmt.bit_length())-1
+        tmpBin = np.array([bin(np.int(x)) if x >= 0 else
+                           bin((~np.int(-x) + 1) & bitSel) for x in tmpVal])
+        return np.reshape(tmpBin, shape)
+
+    def hex(self):
+        shape = self.value.shape
+        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
+        bitSel = 2**(self.fmt.bit_length())-1
+        tmpBin = np.array([hex(np.int(x)) if x >= 0 else
+                           hex((~np.int(-x) + 1) & bitSel) for x in tmpVal])
+        return np.reshape(tmpBin, shape)
+
     def __str__(self):
         return """
         """ + str(self.value) + """
@@ -143,6 +159,8 @@ class FixNum:
 
     # operators
 
+    # ## Addition methods
+
     def __add__(self, other):
         tmpVal = self.value + other.value
         tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
@@ -150,7 +168,7 @@ class FixNum:
                            max(self.fmt.fracBits, other.fmt.fracBits))
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods \
-            not equal, those of first operator will be considered')
+not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
