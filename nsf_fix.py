@@ -184,14 +184,32 @@ not equal, those of first operator will be considered')
                            ) if outFmt is None else outFmt
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
-    def __radd__(self, other):
-        return self.value + other
+    # ## Subtraction methods
 
     def __sub__(self, other):
-        return NotImplemented
+        tmpVal = self.value - other.value
+        tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
+                           max(self.fmt.intBits, other.fmt.intBits)+1,
+                           max(self.fmt.fracBits, other.fmt.fracBits))
+        if (self.rnd != other.rnd) or (self.over != other.over):
+            print('_WARNING_: operators have round and / or overflow methods \
+not equal, those of first operator will be considered')
+        return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
-    def sub(self, other):
-        return NotImplemented
+    def sub(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
+        '''
+        Subtraction method.
+        It allows to decide output format.
+        If not indicated, full-precision format will be adopted
+        '''
+        tmpVal = self.value - other.value
+        tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
+                           max(self.fmt.intBits, other.fmt.intBits)+1,
+                           max(self.fmt.fracBits, other.fmt.fracBits)
+                           ) if outFmt is None else outFmt
+        return FixNum(tmpVal, tmpFmt, outRnd, outOver)
+
+    # ## Multiplication methods
 
     def __mul__(self, other):
         tmpVal = self.value * other.value
@@ -202,12 +220,12 @@ not equal, those of first operator will be considered')
                            self.fmt.fracBits + other.fmt.fracBits)
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods \
-            not equal, those of first operator will be considered')
+not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def mult(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
         '''
-        Multiply method.
+        Multiplication method.
         It allows to decide output format.
         If not indicated, full-precision format will be adopted
         '''
@@ -219,3 +237,8 @@ not equal, those of first operator will be considered')
                            self.fmt.fracBits + other.fmt.fracBits
                            ) if outFmt is None else outFmt
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
+
+    # ## Negation method
+
+    def __neg__(self):
+        return FixNum(-self.value, self.fmt, self.rnd, self.over)
