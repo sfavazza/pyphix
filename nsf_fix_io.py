@@ -1,47 +1,54 @@
 import numpy as np
-from enum import Enum
 
 
-class dataType(Enum):
-    """Fix file column data type
-    """
-    fix = 0
-    int = 1
-    bool = 2
+dataType = ('fix', 'int', 'bool')
 
 
 class FixFile:
     """Class defining a file format used in vhdl test benches.
 
-    If file path is indicated, file descriptor will be initialized with data
-    read from indicated file. Data can be read but not added.
-    If not indicated data can be added and written to file using 'write'
-    method.
-    File path has to be a relative/absolute path plus file name (extension, if
-    any, included).
-    :file
+    File format:
+    ---------- header
+    nsf <numColumns> <numSamples>
+    <colName_1>,<colName_2>, .. <colName_numColumns>
+    <colType_1>,<colType_2>, .. <colType_numColumns>
+    <spl_1_0>,<spl_2_0>, .. <spl_numColumns_0>
+    ..
+    <spl1_numSamples-1>,<spl2_numSamples-1>, .. <splk_numSamples-1>
     """
 
-    def __init__(self, filePath: str=None):
+    def __init__(self):
         self._column = 0
         self._sample = 0
         self._colStruct = {}
         self._orderedColName = list()
-        self.filePath = filePath
 
     # file operations
 
-    def _read(self):
+    def read(self, filePath: str=None):
+        """Read fix formatted file.
+
+        If a file is read, write method will through an exceptions.
+        File path has to be a relative/absolute path plus file name (extension,
+        if any, included).
+        """
         return NotImplemented
 
-    def write(self):
+    def write(self, filePath: str=None):
+        """Write fix formatted file.
+
+        If a file is written, read method will through an exceptions.
+        File path has to be a relative/absolute path plus file name (extension,
+        if any, included).
+        """
+        
         return NotImplemented
 
     # methods
 
     def add_column(self,
                    colName: str,
-                   colType: dataType,
+                   colType: str,
                    colValue):
         """Add data column to file descriptor.
 
@@ -49,25 +56,40 @@ class FixFile:
         All coulmns must have the same number of elements,
         otherwise no column will be added to file descriptor.
 
+        :param colType: data type, can assume only 'fix', 'int', 'bool'
         :param colValue: data to add
-        :type colValue: fix, int or bool
+        :type colValue: nsf_fix.FixNum, int or bool
         """
+        # check type validity
+        if colType not in dataType:
+            raise ValueError("_ERROR_: column type can assume only \
+'fix', 'int', 'bool' string values")
+
+        # check if data is already added
+        if (colName, colType) in self._colStruct.keys():
+            raise KeyError("_ERROR_: '", colName, "' was already added")
+
         data = np.reshape(colValue, -1)
-        if self._column == 0:
+        if self._column == 0 or len(data) == self._sample:
+            self._column += 1
+            self._sample = len(data)
             self._colStruct[(colName, colType)] = data
             self._orderedColName.append((colName, colType))
-        elif len(data) == self._column:
-            self._colStruct[(colName, colType)] = data
-            self._orderedColName.append((colName, colType))
+        else:
+            raise Warning("_WARNING_: data column lenght must be exactly \
+equal to previously added columns (%d). Column not added." % self._sample)
 
     def remove_column(self,
                       colName,
                       colType: dataType):
         del self._colStruct[(colName, colType)]
         self._orderedColName.remove((colName, colType))
+        self._column -= 1
+        if self._column == 0:
+            self._sample = 0
 
     def get_header(self, complete=False):
         if complete:
-            return list(self._colStruct.keys())
+            return self._orderedColName
         else:
-            return [key[0] for key in self._colStruct.keys()]
+            return [key[0] for key in self._orderedColName]
