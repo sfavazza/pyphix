@@ -52,7 +52,7 @@ class FixFile:
                    colValue):
         """Add data column to file descriptor.
 
-        If NxM matrix, data shape will be turned into 1xW, with W = N*M.
+        Data must be provided in 1xN or Nx1 format
         All coulmns must have the same number of elements,
         otherwise no column will be added to file descriptor.
 
@@ -69,15 +69,18 @@ class FixFile:
         if colName in self._get_col_names():
             raise KeyError("_ERROR_: '", colName, "' was already added")
 
+        # check data dimension
         if colType == 'fix':
-            data = fi.FixNum(np.reshape(colValue.value, -1), colValue.fmt,
-                             colValue.rnd, colValue.over)
-        else:
-            data = np.reshape(colValue, -1)
-        if self._column == 0 or len(data) == self._sample:
+            if len(colValue.shape) != 1:
+                raise ValueError("_ERROR_: data shape must be 1xN or Nx1.")
+        elif len(np.array(colValue).shape) != 1:
+            raise ValueError("_ERROR_: data shape must be 1xN or Nx1.")
+
+        # check samples number
+        if self._column == 0 or len(colValue) == self._sample:
             self._column += 1
-            self._sample = len(data)
-            self._colStruct[(colName, colType)] = data
+            self._sample = len(colValue)
+            self._colStruct[(colName, colType)] = colValue  # data
             self._orderedColName.append((colName, colType))
         else:
             raise Warning("_WARNING_: data column lenght must be exactly \
