@@ -45,6 +45,21 @@ try:
 except Warning:
     print("_NOTE_: Test passed 4")
 
+data4 = [np.linspace(2, 3, 49), [x for x in range(0, 49)]]
+data5 = fi.FixNum(
+    [np.linspace(2, 3, 49), np.linspace(2, 3, 49)], fu.FixFmt(False, 1, 7))
+try:
+    # error: wrong data dimension (int)
+    objFile.add_column('data4', 'int', data4)
+except ValueError:
+    print("_NOTE_: Test passed 4")
+
+try:
+    # error: wrong data dimension (fix)
+    objFile.add_column('data5', 'fix', data5)
+except ValueError:
+    print("_NOTE_: Test passed 5")
+
 print(objFile.get_header())
 objFile.remove_column('data1')
 print(objFile.get_header())
