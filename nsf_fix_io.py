@@ -66,7 +66,7 @@ class FixFile:
 'fix', 'int', 'bool' string values")
 
         # check if data is already added
-        if (colName, colType) in self._colStruct.keys():
+        if colName in self._get_col_names():
             raise KeyError("_ERROR_: '", colName, "' was already added")
 
         data = np.reshape(colValue, -1)
@@ -79,17 +79,38 @@ class FixFile:
             raise Warning("_WARNING_: data column lenght must be exactly \
 equal to previously added columns (%d). Column not added." % self._sample)
 
+    def get_column(self, colName: str):
+        """Get data column by name.
+        """
+        return self._colStruct[self._get_col_by_name(colName)]
+        # return NotImplemented
+
     def remove_column(self,
-                      colName,
-                      colType: dataType):
-        del self._colStruct[(colName, colType)]
-        self._orderedColName.remove((colName, colType))
+                      colName):
+        """Remove column data by name.
+        """
+        del self._colStruct[self._get_col_by_name(colName)]
+        self._orderedColName.remove(self._get_col_by_name(colName))
         self._column -= 1
         if self._column == 0:
             self._sample = 0
 
     def get_header(self, complete=False):
+        """Get data header.
+
+        If complete switch is 'True', a series of tuple will be returned in the
+        form (colName, colType). Otherwise the list of column names is returned
+        """
         if complete:
             return self._orderedColName
         else:
-            return [key[0] for key in self._orderedColName]
+            return self._get_col_names()
+
+    def _get_col_names(self):
+        """Extract only column names without data type.
+        """
+        return [key[0] for key in self._orderedColName]
+
+    def _get_col_by_name(self, colName):
+        colNameTypeTuple = self._get_col_names().index(colName)
+        return self._orderedColName[colNameTypeTuple]
