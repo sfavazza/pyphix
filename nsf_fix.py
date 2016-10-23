@@ -7,8 +7,8 @@ class FixNum:
 
     Round methods:
     SymInf    : positive numbers tends to +inf, negative numbers to -inf
-    SymZero   : round toward zero
-    NonSymPos : round toward +inf -- DEFAULT
+    SymZero   : round toward zero -- DEFAULT
+    NonSymPos : round toward +inf
     NonSymNeg : round toward -inf
     ConvEven  : round to closest even
     ConvOdd   : round to closest odd
@@ -16,8 +16,8 @@ class FixNum:
     Ceil      : round to smallest following
 
     Saturation method
-    Sat  : saturate -- DEFAULT
-    Wrap : wrap around
+    Sat  : saturate
+    Wrap : wrap around -- DEFAULT
 
     :param value: value to represent in fix point
     :type value: np.ndarray(ndim > 0), float
