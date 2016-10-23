@@ -1,5 +1,5 @@
 import numpy as np
-
+import nsf_fix as fi
 
 dataType = ('fix', 'int', 'bool')
 
@@ -69,7 +69,11 @@ class FixFile:
         if colName in self._get_col_names():
             raise KeyError("_ERROR_: '", colName, "' was already added")
 
-        data = np.reshape(colValue, -1)
+        if colType == 'fix':
+            data = fi.FixNum(np.reshape(colValue.value, -1), colValue.fmt,
+                             colValue.rnd, colValue.over)
+        else:
+            data = np.reshape(colValue, -1)
         if self._column == 0 or len(data) == self._sample:
             self._column += 1
             self._sample = len(data)
