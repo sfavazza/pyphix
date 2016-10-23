@@ -117,6 +117,7 @@ class FixNum:
         self.fmt = fmt
         self.rnd = rnd
         self.over = over
+        self.shape = shape
 
     # methods
 
@@ -156,6 +157,9 @@ class FixNum:
         saturate: """ + self.over + """
 
         <nsf_fix.FixNum at """ + hex(id(self)) + '>'
+
+    def __len__(self):
+        return len(self.value)
 
     # operators
 
