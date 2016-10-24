@@ -1,7 +1,10 @@
 import numpy as np
 import nsf_fix as fi
 
-dataType = ('fix', 'int', 'bool')
+dataType = {'float': '%f',
+            'fix': '%d',
+            'int': '%d',
+            'bool': '%d'}
 
 
 class FixFile:
@@ -41,8 +44,26 @@ class FixFile:
         File path has to be a relative/absolute path plus file name (extension,
         if any, included).
         """
-        
-        return NotImplemented
+        with open(filePath, mode='w', encoding='utf-8') as f:
+            # global info
+            f.write("nsf {} {}".format(self._column, self._sample))
+            f.write('\n')
+            # column names and type
+            f.write(';'.join([x[0] for x in self._orderedColName]))
+            f.write('\n')
+            f.write(';'.join([x[1] if x[1] != 'fix' else
+                              str(self._colStruct[x].fmt)
+                              for x in self._orderedColName]))
+            f.write('\n')
+        # prepare data to be written into file
+        dataToWrite = np.array([self._colStruct[x] if x[1] != 'fix' else
+                                self._colStruct[x].int()
+                                for x in self._orderedColName])
+        # create format list
+        fmtList = [dataType[x[1]] for x in self._orderedColName]
+        # write data
+        with open(filePath, mode='ab') as f:
+            np.savetxt(f, dataToWrite.T, fmt=fmtList, delimiter=';')
 
     # methods
 
@@ -61,7 +82,7 @@ class FixFile:
         :type colValue: nsf_fix.FixNum, int or bool
         """
         # check type validity
-        if colType not in dataType:
+        if colType not in dataType.keys():
             raise ValueError("_ERROR_: column type can assume only \
 'fix', 'int', 'bool' string values")
 
