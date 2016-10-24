@@ -127,20 +127,21 @@ class FixNum:
         return FixNum(self.value, newFmt, newRnd, newOver)
 
     def bin(self):
-        shape = self.value.shape
         tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
         bitSel = 2**(self.fmt.bit_length())-1
         tmpBin = np.array([bin(np.int(x)) if x >= 0 else
                            bin((~np.int(-x) + 1) & bitSel) for x in tmpVal])
-        return np.reshape(tmpBin, shape)
+        return np.reshape(tmpBin, self.shape)
 
     def hex(self):
-        shape = self.value.shape
+        return np.array([hex(x) for x in self.int()])
+
+    def int(self):
         tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
         bitSel = 2**(self.fmt.bit_length())-1
-        tmpBin = np.array([hex(np.int(x)) if x >= 0 else
-                           hex((~np.int(-x) + 1) & bitSel) for x in tmpVal])
-        return np.reshape(tmpBin, shape)
+        tmpBin = np.array([np.int(x) if x >= 0 else
+                           (~np.int(-x) + 1) & bitSel for x in tmpVal])
+        return np.reshape(tmpBin, self.shape)
 
     def __str__(self):
         return """
