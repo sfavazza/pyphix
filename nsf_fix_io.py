@@ -134,6 +134,8 @@ equal to previously added columns (%d). Column not added." % self._sample)
         else:
             return self._get_col_names()
 
+    # private methods
+
     def _get_col_names(self):
         """Extract only column names without data type.
         """
@@ -142,3 +144,39 @@ equal to previously added columns (%d). Column not added." % self._sample)
     def _get_col_by_name(self, colName):
         colNameTypeTuple = self._get_col_names().index(colName)
         return self._orderedColName[colNameTypeTuple]
+
+    def _convert_str2data(self, colParams, colData):
+        """Convert read string data.
+
+        Each data column is converted according to the column type.
+        If not valid type is found an Error exception is thrown.
+        """
+        if colParams[1] == 'float':
+            return self._str2float(colData)
+        elif colParams[1] == 'int':
+            return self._str2int(colData)
+        elif colParams[1] == 'bool':
+            return self._str2int(colData)
+        else:
+            return self._str2fix(colParams, colParams)
+
+    def _str2float(self, colData):
+        return np.array([float(x) for x in colData])
+
+    def _str2fix(self, colParams, colData):
+        intData = np.array([int(x) for x in colData])
+        # verify tuple format
+        try:
+            signed, intBits, fracBits = colParams[1]
+            print("ciao io sono un apix ' ")
+        except ValueError:
+            print("_ERROR_: current column data isn't of fix type")
+
+        fmt = fu.FixFmt(signed, fracBits, colParams)
+        return fi.FixNum(intData*2**(-fracBits), fmt)
+
+    def _str2int(self, colData):
+        return np.array([int(x) for x in colData])
+
+    def _str2bool(self, colData):
+        return np.array([x != '0' for x in colData])
