@@ -37,3 +37,17 @@ has to be positive")
     def range(self):
         """Return the range representable by fix format object"""
         pass
+
+    def tuple(self):
+        """Return object as a tuple.
+        """
+        return (self.signed,
+                self.intBits,
+                self.fracBits)
+
+    def list(self):
+        """Return object as a tuple.
+        """
+        return [self.signed,
+                self.intBits,
+                self.fracBits]
