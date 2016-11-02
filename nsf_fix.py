@@ -143,6 +143,11 @@ class FixNum:
                            (~np.int(-x) + 1) & bitSel for x in tmpVal])
         return np.reshape(tmpBin, self.shape)
 
+    def fimath(self):
+        """Return fix math as tuple (round method, overflow mode).
+        """
+        return (self.rnd, self.over)
+
     def __str__(self):
         return """
         """ + str(self.value) + """
