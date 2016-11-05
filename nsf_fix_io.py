@@ -1,5 +1,8 @@
+import ast
 import numpy as np
+
 import nsf_fix as fi
+import nsf_fix_util as fu
 
 dataType = {'float': '%f',
             'fix': '%d',
@@ -23,7 +26,7 @@ class FixFile:
     def __init__(self):
         self._column = 0
         self._sample = 0
-        self._colStruct = {}
+        self._colStruct = dict()
         self._orderedColName = list()
 
     # file operations
@@ -48,11 +51,12 @@ class FixFile:
             # global info
             f.write("nsf {} {}".format(self._column, self._sample))
             f.write('\n')
-            # column names and type
-            f.write(';'.join([x[0] for x in self._orderedColName]))
+            # column names and type (write them as literal string with apices)
+            f.write(','.join(["'" + x[0] + "'" for x in self._orderedColName]))
             f.write('\n')
-            f.write(';'.join([x[1] if x[1] != 'fix' else
-                              str(self._colStruct[x].fmt)
+            f.write(','.join(["'" + x[1] + "'" if x[1] != 'fix' else
+                              str([self._colStruct[x].fmt.tuple(),
+                                   self._colStruct[x].fimath()])
                               for x in self._orderedColName]))
             f.write('\n')
         # prepare data to be written into file
@@ -63,7 +67,7 @@ class FixFile:
         fmtList = [dataType[x[1]] for x in self._orderedColName]
         # write data
         with open(filePath, mode='ab') as f:
-            np.savetxt(f, dataToWrite.T, fmt=fmtList, delimiter=';')
+            np.savetxt(f, dataToWrite.T, fmt=fmtList, delimiter=',')
 
     # methods
 
@@ -101,7 +105,13 @@ class FixFile:
         if self._column == 0 or len(colValue) == self._sample:
             self._column += 1
             self._sample = len(colValue)
-            self._colStruct[(colName, colType)] = colValue  # data
+            # always convert to np.array
+            if colType != 'fix':
+                self._colStruct[(colName, colType)] = np.array([x for x in
+                                                                colValue])
+            else:
+                self._colStruct[(colName, colType)] = colValue
+
             self._orderedColName.append((colName, colType))
         else:
             raise Warning("_WARNING_: data column lenght must be exactly \
