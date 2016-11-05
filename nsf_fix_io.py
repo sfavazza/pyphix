@@ -113,6 +113,8 @@ class FixFile:
                 self._colStruct[(colName, colType)] = colValue
 
             self._orderedColName.append((colName, colType))
+            # allows to continue applying methods in sequence
+            return self
         else:
             raise Warning("_WARNING_: data column lenght must be exactly \
 equal to previously added columns (%d). Column not added." % self._sample)
@@ -121,7 +123,6 @@ equal to previously added columns (%d). Column not added." % self._sample)
         """Get data column by name.
         """
         return self._colStruct[self._get_col_by_name(colName)]
-        # return NotImplemented
 
     def remove_column(self,
                       colName):
@@ -132,6 +133,8 @@ equal to previously added columns (%d). Column not added." % self._sample)
         self._column -= 1
         if self._column == 0:
             self._sample = 0
+        # allows to continue applying methods in sequence
+        return self
 
     def get_header(self, complete=False):
         """Get data header.
@@ -139,7 +142,9 @@ equal to previously added columns (%d). Column not added." % self._sample)
         If complete switch is 'True', a series of tuple will be returned in the
         form (colName, colType). Otherwise the list of column names is returned
         """
-        if complete:
+        if self._orderedColName == []:
+            raise Warning('_WARNING_: file object is empty.')
+        elif complete:
             return self._orderedColName
         else:
             return self._get_col_names()
