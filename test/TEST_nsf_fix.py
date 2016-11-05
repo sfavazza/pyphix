@@ -1,13 +1,18 @@
 import unittest as utst
 import numpy as np
+import importlib as imp
 
-from nsf_fix import FixNum as fi
-from nsf_fix_util import FixFmt as fu
-
+import nsf_fix as fi
+import nsf_fix_util as fu
 
 ########################################################
 # IMPORTANT: run this script from its parent directory #
 ########################################################
+
+# reload module to be sure last changes are taken into account
+imp.reload(fu)
+imp.reload(fi)
+
 
 class TestKnownValues(utst.TestCase):
 
@@ -16,7 +21,7 @@ class TestKnownValues(utst.TestCase):
     # ******************************
 
     # define format
-    s_4 = fu(True, 0, 4)
+    s_4 = fu.FixFmt(True, 0, 4)
     # create test vector
     realCoeff = 2**s_4.fracBits
     tstPatternSigned = np.array([2.6, 2.5, 2.4, 1.7, 1.5, 1.2,
@@ -43,7 +48,7 @@ class TestKnownValues(utst.TestCase):
     # ## Compare against known values
     def test_NsfFix_KnownSignedValues(self):
         # apply round methods on test pattern
-        tstFixSigned = {key: fi(self.tstPatternSigned,
+        tstFixSigned = {key: fi.FixNum(self.tstPatternSigned,
                                 self.s_4,
                                 key,
                                 'Wrap')
@@ -57,7 +62,7 @@ class TestKnownValues(utst.TestCase):
     # TEST ROUND METHODS - UNSIGNED
     # ******************************
     # define format
-    u_4 = fu(False, 0, 4)
+    u_4 = fu.FixFmt(False, 0, 4)
     # create test vector
     realCoeff = 2**s_4.fracBits
     tstPatternUnsigned = np.array([2.6, 2.5, 2.4, 1.7, 1.5, 1.2,
@@ -83,7 +88,7 @@ class TestKnownValues(utst.TestCase):
 
     def test_NsfFix_KnownUnsignedValues(self):
         # apply round methods on test pattern
-        tstFixUnsigned = {key: fi(self.tstPatternUnsigned,
+        tstFixUnsigned = {key: fi.FixNum(self.tstPatternUnsigned,
                                   self.u_4,
                                   key,
                                   'Wrap')
@@ -109,7 +114,7 @@ class TestKnownValues(utst.TestCase):
 
     def test_NsfFix_KnownSignedOverflow(self):
         # apply overflow methods
-        overFixSigned = {key: fi(self.overPatternSigned,
+        overFixSigned = {key: fi.FixNum(self.overPatternSigned,
                                  self.s_4,
                                  'SymZero',
                                  key)
@@ -136,7 +141,7 @@ class TestKnownValues(utst.TestCase):
 
     def test_NsfFix_KnownUnsignedOverflow(self):
         # apply overflow methods
-        overFixUnsigned = {key: fi(self.overPatternUnsigned,
+        overFixUnsigned = {key: fi.FixNum(self.overPatternUnsigned,
                                    self.u_4,
                                    'SymZero',
                                    key)
