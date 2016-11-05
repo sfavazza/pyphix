@@ -1,4 +1,5 @@
 import importlib as imp
+import unittest as utst
 
 import numpy as np
 
@@ -63,3 +64,11 @@ except ValueError:
 print(objFile.get_header())
 objFile.remove_column('data1')
 print(objFile.get_header())
+
+objFile.write('testWrite.txt')
+objRead = fio.FixFile()
+objRead.read('testWrite.txt')
+dataWritten = [objFile.get_column(x) for x in objFile.get_header()]
+dataRead = [objRead.get_column(x) for x in objRead.get_header()]
+# TODO: compare data written with those read back from the written file
+# if np.where()
