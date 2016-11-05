@@ -14,7 +14,7 @@ imp.reload(fu)
 imp.reload(fi)
 
 
-class TestKnownValues(utst.TestCase):
+class TestNsfFixKnownValues(utst.TestCase):
 
     # ******************************
     # TEST ROUND METHODS - SIGNED
