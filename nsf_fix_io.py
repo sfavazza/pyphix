@@ -4,7 +4,7 @@ import numpy as np
 import nsf_fix as fi
 import nsf_fix_util as fu
 
-dataType = {'float': '%f',
+dataType = {'float': '%.8f',
             'fix': '%d',
             'int': '%d',
             'bool': '%d'}
@@ -38,7 +38,42 @@ class FixFile:
         File path has to be a relative/absolute path plus file name (extension,
         if any, included).
         """
-        return NotImplemented
+        with open(filePath, mode='r', encoding='utf-8') as f:
+            # identify file type
+            header = f.readline().split(' ')
+            if header[0] != 'nsf':
+                raise ValueError("_ERROR_: file '", filePath,
+                                 "' is not valid nsf fix format file.")
+
+            # info on data
+            self._column = int(header[1])
+            self._sample = int(header[2])
+            # column names and types
+            colName = ast.literal_eval('[' + f.readline()[:-1] + ']')
+            colType = ast.literal_eval('[' + f.readline()[:-1] + ']')
+            self._orderedColName = [(colName[i], colType[i])
+                                    if type(colType[i]) is not list else
+                                    (colName[i], 'fix')
+                                    for i in range(0, self._column)]
+            # data extraction
+            rawData = ast.literal_eval('[[' +
+                                       f.read()[:-1].replace('\n', '],[') +
+                                       ']]')
+            shapedData = np.array(rawData).T
+            # store into file descriptor
+            self._colStruct = {self._orderedColName[k]:
+                               fi.FixNum(
+                                   shapedData[k] * 2**(-colType[k][0][2]),
+                                   fu.FixFmt(colType[k][0][0],
+                                             colType[k][0][1],
+                                             colType[k][0][2]),
+                                   colType[k][1][0],
+                                   colType[k][1][1])
+                               if self._orderedColName[k][1] == 'fix' else
+                               shapedData[k] > 0
+                               if self._orderedColName[k][1] == 'bool' else
+                               shapedData[k]
+                               for k in range(0, self._column)}
 
     def write(self, filePath: str=None):
         """Write fix formatted file.
