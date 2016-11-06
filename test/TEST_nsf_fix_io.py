@@ -42,15 +42,15 @@ class TestNsfFixIoMethods(utst.TestCase):
 
         # add columns and verify header
         objFile \
-            .add_column('data1', 'int', self.data1) \
-            .add_column('data2', 'float', self.data2) \
+            .add_column('data1', 'float', self.data1) \
+            .add_column('data2', 'int', self.data2) \
             .add_column('data3', 'fix', self.data3) \
             .add_column('data4', 'bool', self.data4)
         # verify header
         self.assertEqual(['data1', 'data2', 'data3', 'data4'],
                          objFile.get_header())
-        self.assertEqual([('data1', 'int'),
-                          ('data2', 'float'),
+        self.assertEqual([('data1', 'float'),
+                          ('data2', 'int'),
                           ('data3', 'fix'),
                           ('data4', 'bool')],
                          objFile.get_header(True))
@@ -72,7 +72,7 @@ class TestNsfFixIoMethods(utst.TestCase):
             objFile \
                 .add_column('data7', 'bool', self.data7) \
                 .add_column('data7', 'bool', self.data7)
-                
+
         # add column with unknown type
         with self.assertRaises(ValueError):
             objFile.add_column('fakeCol', 'fakeDataType', self.data1)
@@ -80,13 +80,13 @@ class TestNsfFixIoMethods(utst.TestCase):
         # add non-vector data column
         with self.assertRaises(ValueError):
             objFile.add_column('data5', 'fix', self.data5)
-            
+
         # remove column
         objFile \
             .remove_column('data2') \
             .remove_column('data4')
         # verify
-        self.assertEqual([('data1', 'int'),
+        self.assertEqual([('data1', 'float'),
                           ('data3', 'fix'),
                           ('data7', 'bool')], objFile.get_header(True))
         self.assertEqual(['data1', 'data3', 'data7'], objFile.get_header())
@@ -100,10 +100,20 @@ class TestNsfFixIoMethods(utst.TestCase):
         self.assertEqual(objFile.get_header(True),
                          objReadBack.get_header(True))
         # compare read values
-        for col in objReadBack.get_header():
-            np.testing.assert_array_equal(
-                np.array(objFile.get_column(col)),
-                np.array(objReadBack.get_column(col)))
+        for col in objReadBack.get_header(True):
+            if col[1] == 'float':
+                np.testing.assert_allclose(
+                    np.array(objFile.get_column(col[0])),
+                    np.array(objReadBack.get_column(col[0])), rtol=1e-8)
+            elif col[1] == 'fix':
+                np.testing.assert_array_equal(
+                    np.array(objFile.get_column(col[0]).value),
+                    np.array(objReadBack.get_column(col[0]).value))
+            else:
+                np.testing.assert_array_equal(
+                    np.array(objFile.get_column(col[0])),
+                    np.array(objReadBack.get_column(col[0])))
+
 
 if __name__ == '__main__':
     utst.main()
