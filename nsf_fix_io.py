@@ -21,6 +21,10 @@ class FixFile:
     <spl_1_0>,<spl_2_0>, .. <spl_numColumns_0>
     ..
     <spl1_numSamples-1>,<spl2_numSamples-1>, .. <splk_numSamples-1>
+
+    NOTE: data written in the file can be used as stimuli in the test benches
+    only if data channels are synchronous.
+    Otherwise separate files should be used.
     """
 
     def __init__(self):
