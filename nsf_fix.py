@@ -90,9 +90,7 @@ class FixNum:
         if over == "Sat":
             if fmt.signed:
                 fixVal = np.array(
-                    [max(
-                        min(f, 2**(fmt.bit_length()-1)-1),
-                        -2**(fmt.bit_length()-1)) for f in fixVal], atype)
+                    [max(min(f, fmt.max()), fmt.min()) for f in fixVal], atype)
             else:
                 fixVal = np.array([max(
                     min(f, 2**(fmt.bit_length())-1), 0)

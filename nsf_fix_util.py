@@ -34,8 +34,25 @@ has to be positive")
             + self.intBits \
             + self.fracBits
 
+    def max(self):
+        """Return max representable value by current fix format objext
+        """
+        if self.signed:
+            return 2**(self.bit_length()-1)-1
+        else:
+            return 2**(self.bit_length())-1
+
+    def min(self):
+        """Return min representable value by current fix format objext
+        """
+        if self.signed:
+            return -2**(self.bit_length()-1)
+        else:
+            return 0
+
     def range(self):
-        """Return the range representable by fix format object"""
+        """Return the range representable by fix format object
+        """
         pass
 
     def tuple(self):
