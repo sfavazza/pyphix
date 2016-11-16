@@ -110,9 +110,8 @@ class FixNum:
             else:
                 fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
         else:
-            raise ValueError("_ERROR_: %r is not valid overflow value."
-                            % over)
-
+            raise ValueError("_ERROR_: %r is not valid overflow value." % over)
+        # TODO: tackle with negative frac or int bits number in format
         self.value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
         self.fmt = fmt
         self.rnd = rnd
