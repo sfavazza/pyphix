@@ -42,10 +42,12 @@ class FixNum:
             value = np.array(value) if isinstance(value, list) \
                     else np.array([value])  # prevent 0 dimension array
 
+        # to integer representation coefficient
+        toIntCoeff = 2**fmt.fracBits
         # turn input into 1D array (to allow iteration through out all values)
         shape = value.shape
         value = np.reshape(value, -1)
-        value = value*2**fmt.fracBits
+        value = value*toIntCoeff
 
         # select array type
         atype = np.int64 if fmt.signed else np.uint64
@@ -90,7 +92,8 @@ class FixNum:
         if over == "Sat":
             if fmt.signed:
                 fixVal = np.array(
-                    [max(min(f, fmt.max()), fmt.min()) for f in fixVal], atype)
+                    [max(min(f, fmt.max()*toIntCoeff),
+                         fmt.min()*toIntCoeff) for f in fixVal], atype)
             else:
                 fixVal = np.array([max(
                     min(f, 2**(fmt.bit_length())-1), 0)
