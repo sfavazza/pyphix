@@ -42,16 +42,15 @@ class TestNsfFixKnownValues(utst.TestCase):
     tstExpSigned['ConvOdd'] = np.array([3, 3, 2, 2, 1, 1,
                                         -4, -5, -5, -5, -5, -6]) / realCoeff
     tstExpSigned['Floor'] = np.array([2, 2, 2, 1, 1, 1,
-
                                       -4, -4, -4, -5, -5, -5]) / realCoeff
 
     # ## Compare against known values
     def test_NsfFix_KnownSignedValues(self):
         # apply round methods on test pattern
         tstFixSigned = {key: fi.FixNum(self.tstPatternSigned,
-                                self.s_4,
-                                key,
-                                'Wrap')
+                                       self.s_4,
+                                       key,
+                                       'Wrap')
                         for key in self.tstExpSigned.keys()}
         # verify
         for key in self.tstExpSigned.keys():
@@ -89,9 +88,9 @@ class TestNsfFixKnownValues(utst.TestCase):
     def test_NsfFix_KnownUnsignedValues(self):
         # apply round methods on test pattern
         tstFixUnsigned = {key: fi.FixNum(self.tstPatternUnsigned,
-                                  self.u_4,
-                                  key,
-                                  'Wrap')
+                                         self.u_4,
+                                         key,
+                                         'Wrap')
                           for key in self.tstExpUnsigned.keys()}
         # verify
         for key in self.tstExpUnsigned.keys():
@@ -115,9 +114,9 @@ class TestNsfFixKnownValues(utst.TestCase):
     def test_NsfFix_KnownSignedOverflow(self):
         # apply overflow methods
         overFixSigned = {key: fi.FixNum(self.overPatternSigned,
-                                 self.s_4,
-                                 'SymZero',
-                                 key)
+                                        self.s_4,
+                                        'SymZero',
+                                        key)
                          for key in self.overExpSigned.keys()}
         # verify
         for key in self.overExpSigned.keys():
@@ -142,9 +141,9 @@ class TestNsfFixKnownValues(utst.TestCase):
     def test_NsfFix_KnownUnsignedOverflow(self):
         # apply overflow methods
         overFixUnsigned = {key: fi.FixNum(self.overPatternUnsigned,
-                                   self.u_4,
-                                   'SymZero',
-                                   key)
+                                          self.u_4,
+                                          'SymZero',
+                                          key)
                            for key in self.overExpUnsigned.keys()}
         # verify
         for key in self.overExpUnsigned.keys():
