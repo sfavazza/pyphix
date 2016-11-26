@@ -38,15 +38,15 @@ has to be positive")
         """Return max representable value by current fix format objext
         """
         if self.signed:
-            return 2**(self.bit_length()-1)-1
+            return (2**(self.bit_length()-1)-1)/2**self.fracBits
         else:
-            return 2**(self.bit_length())-1
+            return (2**(self.bit_length())-1)/2**self.fracBits
 
     def min(self):
         """Return min representable value by current fix format objext
         """
         if self.signed:
-            return -2**(self.bit_length()-1)
+            return -2**(self.bit_length()-1)/2**self.fracBits
         else:
             return 0
 
