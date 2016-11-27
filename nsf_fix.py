@@ -90,14 +90,9 @@ class FixNum:
 
         # check overflow
         if over == "Sat":
-            if fmt.signed:
-                fixVal = np.array(
-                    [max(min(f, fmt.max()*toIntCoeff),
-                         fmt.min()*toIntCoeff) for f in fixVal], atype)
-            else:
-                fixVal = np.array([max(
-                    min(f, 2**(fmt.bit_length())-1), 0)
-                                   for f in fixVal], atype)
+            fixVal = np.array(
+                [max(min(f, fmt.max()*toIntCoeff),
+                     fmt.min()*toIntCoeff) for f in fixVal], atype)
         elif over == "Wrap":
             bitSel = 2**(fmt.bit_length())-1
             if fmt.signed:
