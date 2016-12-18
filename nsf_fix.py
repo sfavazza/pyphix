@@ -116,10 +116,19 @@ class FixNum:
 
     # methods
 
-    def change_fix(self, newFmt, newRnd, newOver):
-        '''Return input FixNum object expressed with passed:
-        format, round method and overflow method'''
-        return FixNum(self.value, newFmt, newRnd, newOver)
+    def change_fix(self,
+                   newFmt: fu.FixFmt,
+                   newRnd: str=None,
+                   newOver: str=None):
+        """Change fix parameters of current object.
+
+        :param newFmt: new format (mandatory)
+        :param newRnd: new round method, if not specified current is used
+        :param newOver: new saturation method, if not specified current is used
+        """
+        return FixNum(self.value, newFmt,
+                      newRnd if newRnd is not None else self.rnd,
+                      newOver if newOver is not None else self.over)
 
     def bin(self):
         tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits

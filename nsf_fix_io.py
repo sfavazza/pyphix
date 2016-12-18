@@ -86,26 +86,29 @@ class FixFile:
         File path has to be a relative/absolute path plus file name (extension,
         if any, included).
         """
-        with open(filePath, mode='w', encoding='utf-8') as f:
+        with open(filePath, mode='wb') as f:
             # global info
-            f.write("nsf {} {}".format(self._column, self._sample))
-            f.write('\n')
+            strToWrite = "nsf {} {}".format(self._column, self._sample)
+            f.write(strToWrite.encode('ascii'))
+            f.write(b'\n')
             # column names and type (write them as literal string with apices)
-            f.write(','.join(["'" + x[0] + "'" for x in self._orderedColName]))
-            f.write('\n')
-            f.write(','.join(["'" + x[1] + "'" if x[1] != 'fix' else
-                              str([self._colStruct[x].fmt.tuple(),
-                                   self._colStruct[x].fimath()])
-                              for x in self._orderedColName]))
-            f.write('\n')
-        # prepare data to be written into file
-        dataToWrite = np.array([self._colStruct[x] if x[1] != 'fix' else
-                                self._colStruct[x].int()
-                                for x in self._orderedColName])
-        # create format list
-        fmtList = [dataType[x[1]] for x in self._orderedColName]
-        # write data
-        with open(filePath, mode='ab') as f:
+            strToWrite = ','.join(["'" + x[0] + "'"
+                                   for x in self._orderedColName])
+            f.write(strToWrite.encode('ascii'))
+            f.write(b'\n')
+            strToWrite = ','.join(["'" + x[1] + "'" if x[1] != 'fix' else
+                                   str([self._colStruct[x].fmt.tuple(),
+                                        self._colStruct[x].fimath()])
+                                   for x in self._orderedColName])
+            f.write(strToWrite.encode('ascii'))
+            f.write(b'\n')
+            # prepare data to be written into file
+            dataToWrite = np.array([self._colStruct[x] if x[1] != 'fix' else
+                                    self._colStruct[x].int()
+                                    for x in self._orderedColName])
+            # create format list
+            fmtList = [dataType[x[1]] for x in self._orderedColName]
+            # write data
             np.savetxt(f, dataToWrite.T, fmt=fmtList, delimiter=',')
 
     # methods
