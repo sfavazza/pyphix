@@ -91,6 +91,15 @@ class TestNsfFixIoMethods(utst.TestCase):
                           ('data7', 'bool')], objFile.get_header(True))
         self.assertEqual(['data1', 'data3', 'data7'], objFile.get_header())
 
+    def test_NsfFixIo_WriteRead(self):
+        # define file object
+        objFile = fio.FixFile()
+        # add data
+        objFile \
+            .add_column('data1', 'float', self.data1) \
+            .add_column('data2', 'int', self.data2) \
+            .add_column('data3', 'fix', self.data3) \
+            .add_column('data4', 'bool', self.data4)
         # test write / read methods
         objFile.write('testWrite.txt')
         objReadBack = fio.FixFile()
