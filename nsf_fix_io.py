@@ -4,7 +4,7 @@ import numpy as np
 import nsf_fix as fi
 import nsf_fix_util as fu
 
-dataType = {'float': '%.8f',
+dataType = {'float': '%s',
             'fix': '%d',
             'int': '%d',
             'bool': '%d'}
@@ -104,12 +104,13 @@ class FixFile:
             f.write(b'\n')
             # prepare data to be written into file
             dataToWrite = np.array([self._colStruct[x] if x[1] != 'fix' else
-                                    self._colStruct[x].int()
+                                    [str(fixHex) for fixHex in
+                                     self._colStruct[x].hex()]
                                     for x in self._orderedColName])
-            # create format list
-            fmtList = [dataType[x[1]] for x in self._orderedColName]
             # write data
-            np.savetxt(f, dataToWrite.T, fmt=fmtList, delimiter=',')
+            for line in dataToWrite.T:
+                strToWrite = str(line)[2:-2].replace("' '", ',') + '\n'
+                f.write(strToWrite.encode('ascii'))
 
     # methods
 
