@@ -100,6 +100,8 @@ class FixFile:
                                    str([self._colStruct[x].fmt.tuple(),
                                         self._colStruct[x].fimath()])
                                    for x in self._orderedColName])
+            # remove spaces
+            strToWrite.replace(' ', '')
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
             # prepare data to be written into file
