@@ -101,7 +101,7 @@ class FixFile:
                                         self._colStruct[x].fimath()])
                                    for x in self._orderedColName])
             # remove spaces
-            strToWrite.replace(' ', '')
+            strToWrite = strToWrite.replace(' ', '')
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
             # prepare data to be written into file
