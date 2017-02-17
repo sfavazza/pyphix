@@ -53,15 +53,18 @@ class FixFile:
             self._column = int(header[1])
             self._sample = int(header[2])
             # column names and types
-            colName = ast.literal_eval('[' + f.readline()[:-1] + ']')
-            colType = ast.literal_eval('[' + f.readline()[:-1] + ']')
+            lineContent = f.readline()[:-1].replace(' ', ',')
+            colName = ast.literal_eval('[' + lineContent + ']')
+            lineContent = f.readline()[:-1].replace(' ', ',')
+            colType = ast.literal_eval('[' + lineContent + ']')
             self._orderedColName = [(colName[i], colType[i])
                                     if type(colType[i]) is not list else
                                     (colName[i], 'fix')
                                     for i in range(0, self._column)]
             # data extraction
+            fileContent = f.read()[:-1].replace('\n', '],[')
             rawData = ast.literal_eval('[[' +
-                                       f.read()[:-1].replace('\n', '],[') +
+                                       fileContent.replace(' ', ',') +
                                        ']]')
             shapedData = np.array(rawData).T
             # store into file descriptor
@@ -92,16 +95,17 @@ class FixFile:
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
             # column names and type (write them as literal string with apices)
-            strToWrite = ','.join(["'" + x[0] + "'"
+            strToWrite = ' '.join(["'" + x[0] + "'"
                                    for x in self._orderedColName])
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
-            strToWrite = ','.join(["'" + x[1] + "'" if x[1] != 'fix' else
+            strToWrite = ' '.join(["'" + x[1] + "'" if x[1] != 'fix' else
                                    str([self._colStruct[x].fmt.tuple(),
                                         self._colStruct[x].fimath()])
+                                   .replace(' ', '')
                                    for x in self._orderedColName])
             # remove spaces
-            strToWrite = strToWrite.replace(' ', '')
+            # strToWrite = strToWrite.replace(' ', '')
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
             # prepare data to be written into file
@@ -111,7 +115,7 @@ class FixFile:
                                     for x in self._orderedColName])
             # write data
             for line in dataToWrite.T:
-                strToWrite = str(line)[2:-2].replace("' '", ',') + '\n'
+                strToWrite = str(line)[2:-2].replace("' '", ' ') + '\n'
                 f.write(strToWrite.encode('ascii'))
 
     # methods
