@@ -58,7 +58,7 @@ class FixFile:
             lineContent = f.readline()[:-1].replace(' ', ',')
             colType = ast.literal_eval('[' + lineContent + ']')
             self._orderedColName = [(colName[i], colType[i])
-                                    if type(colType[i]) is not list else
+                                    if type(colType[i]) is not tuple else
                                     (colName[i], 'fix')
                                     for i in range(0, self._column)]
             # data extraction
@@ -67,15 +67,13 @@ class FixFile:
                                        fileContent.replace(' ', ',') +
                                        ']]')
             shapedData = np.array(rawData).T
-            # store into file descriptor
+            # store into file descriptor (use default fimath)
             self._colStruct = {self._orderedColName[k]:
                                fi.FixNum(
-                                   shapedData[k] * 2**(-colType[k][0][2]),
-                                   fu.FixFmt(colType[k][0][0],
-                                             colType[k][0][1],
-                                             colType[k][0][2]),
-                                   colType[k][1][0],
-                                   colType[k][1][1])
+                                   shapedData[k] * 2**(-colType[k][2]),
+                                   fu.FixFmt(colType[k][0],
+                                             colType[k][1],
+                                             colType[k][2]))
                                if self._orderedColName[k][1] == 'fix' else
                                shapedData[k] > 0
                                if self._orderedColName[k][1] == 'bool' else
@@ -100,8 +98,7 @@ class FixFile:
             f.write(strToWrite.encode('ascii'))
             f.write(b'\n')
             strToWrite = ' '.join(["'" + x[1] + "'" if x[1] != 'fix' else
-                                   str([self._colStruct[x].fmt.tuple(),
-                                        self._colStruct[x].fimath()])
+                                   str(self._colStruct[x].fmt.tuple())
                                    .replace(' ', '')
                                    for x in self._orderedColName])
             # remove spaces
