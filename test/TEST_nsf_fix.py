@@ -42,7 +42,9 @@ class TestNsfFixKnownValues(utst.TestCase):
     tstExpSigned['ConvOdd'] = np.array([3, 3, 2, 2, 1, 1,
                                         -4, -5, -5, -5, -5, -6]) / realCoeff
     tstExpSigned['Floor'] = np.array([2, 2, 2, 1, 1, 1,
-                                      -4, -4, -4, -5, -5, -5]) / realCoeff
+                                      -5, -5, -5, -6, -6, -6]) / realCoeff
+    tstExpSigned['Ceil'] = np.array([3, 3, 3, 2, 2, 2,
+                                     -4, -4, -4, -5, -5, -5]) / realCoeff
 
     # ## Compare against known values
     def test_NsfFix_KnownSignedValues(self):
@@ -84,6 +86,8 @@ class TestNsfFixKnownValues(utst.TestCase):
                                           4, 5, 5, 5, 5, 6]) / realCoeff
     tstExpUnsigned['Floor'] = np.array([2, 2, 2, 1, 1, 1,
                                         4, 4, 4, 5, 5, 5]) / realCoeff
+    tstExpUnsigned['Ceil'] = np.array([3, 3, 3, 2, 2, 2,
+                                       5, 5, 5, 6, 6, 6]) / realCoeff
 
     def test_NsfFix_KnownUnsignedValues(self):
         # apply round methods on test pattern

@@ -66,24 +66,18 @@ class FixNum:
             fixVal = np.array([v+.4 if v > 0 else
                                v-.5 for v in value])
         elif rnd == "ConvEven":
-            fixVal = np.array([v+.4 if (v >= 0) and
-                               int(v) % 2 == 0 else
-                               v-.4 if (v < 0) and
-                               int(v) % 2 == 0 else
-                               v+.5 if v > 0 else
-                               v-.5 for v in value])
+            fixVal = np.array([v+.4 if (v >= 0) and int(v) % 2 == 0 else
+                               v-.4 if (v < 0) and int(v) % 2 == 0 else
+                               v+.5 if v > 0 else v-.5 for v in value])
         elif rnd == "ConvOdd":
-            fixVal = np.array([v+.5 if (v >= 0) and
-                               (int(v) % 2 == 0) else
-                               v-.5 if (v < 0) and
-                               (int(v) % 2 == 0) else
-                               v+.4 if v > 0 else
-                               v-.4 for v in value])
+            fixVal = np.array([v+.5 if (v >= 0) and int(v) % 2 == 0 else
+                               v-.5 if (v < 0) and int(v) % 2 == 0 else
+                               v+.4 if v > 0 else v-.4 for v in value])
         elif rnd == "Floor":
-            # not merhely floor function as symmetric in both directions
-            fixVal = np.array([int(v) for v in
-                               value])
+            # round to the previous largest
+            fixVal = np.array([np.floor(v) for v in value])
         elif rnd == "Ceil":
+            # round to the next smallest
             fixVal = np.array([np.ceil(v) for v in value])
         else:
             raise ValueError("_ERROR_: %r is not valid round value." % rnd)
