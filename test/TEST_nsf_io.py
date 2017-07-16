@@ -2,7 +2,7 @@ import unittest as utst
 import numpy as np
 import importlib as imp
 
-import nsf_fix_io as fio
+import nsf_io as fio
 import nsf_fix_util as fu
 import nsf_fix as fi
 
