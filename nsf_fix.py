@@ -1,5 +1,22 @@
 import nsf_fix_util as fu
 import numpy as np
+from numpy import bitwise_and as np_and
+from numpy import bitwise_not as np_not
+# for decorator
+import time
+
+
+# function performance decorator
+def time_perfomance(f):
+
+    def function_exec_time_wrapper(*args, **kwargs):
+        startTime = time.time()
+        functionObject = f(*args, **kwargs)
+        endTime = time.time()
+        print("Time to run function " + f.__name__ + ": {}".format(endTime - startTime))
+        return functionObject
+
+    return function_exec_time_wrapper
 
 
 class FixNum:
@@ -37,79 +54,87 @@ class FixNum:
                  rnd="SymZero",
                  over="Wrap"):
 
-        # cast to np is necessary
-        if type(value) is not np.ndarray:
-            value = np.array(value) if isinstance(value, list) \
-                    else np.array([value])  # prevent 0 dimension array
-
-        # to integer representation coefficient
-        toIntCoeff = 2**fmt.fracBits
-        # turn input into 1D array (to allow iteration through out all values)
-        shape = value.shape
-        value = np.reshape(value, -1)
-        value = value*toIntCoeff
-
-        # select array type
-        atype = np.int64 if fmt.signed else np.uint64
-
-        # round
-        if rnd == "SymInf":
-            fixVal = np.array([v+.5 if v > 0 else
-                               v-.5 for v in value])
-        elif rnd == "SymZero":
-            fixVal = np.array([v+.4 if v > 0 else
-                               v-.4 for v in value])
-        elif rnd == "NonSymPos":
-            fixVal = np.array([v+.5 if v > 0 else
-                               v-.4 for v in value])
-        elif rnd == "NonSymNeg":
-            fixVal = np.array([v+.4 if v > 0 else
-                               v-.5 for v in value])
-        elif rnd == "ConvEven":
-            fixVal = np.array([v+.4 if (v >= 0) and int(v) % 2 == 0 else
-                               v-.4 if (v < 0) and int(v) % 2 == 0 else
-                               v+.5 if v > 0 else v-.5 for v in value])
-        elif rnd == "ConvOdd":
-            fixVal = np.array([v+.5 if (v >= 0) and int(v) % 2 == 0 else
-                               v-.5 if (v < 0) and int(v) % 2 == 0 else
-                               v+.4 if v > 0 else v-.4 for v in value])
-        elif rnd == "Floor":
-            # round to the previous largest
-            fixVal = np.array([np.floor(v) for v in value])
-        elif rnd == "Ceil":
-            # round to the next smallest
-            fixVal = np.array([np.ceil(v) for v in value])
-        else:
-            raise ValueError("_ERROR_: %r is not valid round value." % rnd)
-
-        # check overflow
-        if over == "Sat":
-            fixVal = np.array(
-                [max(min(f, fmt.max()*toIntCoeff),
-                     fmt.min()*toIntCoeff) for f in fixVal], atype)
-        elif over == "Wrap":
-            bitSel = 2**(fmt.bit_length())-1
-            if fmt.signed:
-                compl2s = np.array([int(f) & bitSel for f in fixVal], atype)
-                fixVal = np.array([
-                    # if non negative
-                    int(f) if int(f) & 2**(fmt.bit_length()-1) == 0
-                    # if negative make 2's complement and restore negative sign
-                    else -((~f + 1) & bitSel) for f in compl2s],
-                                  atype)
-            else:
-                fixVal = np.array([int(f) & bitSel for f in fixVal], atype)
-        else:
-            raise ValueError("_ERROR_: %r is not valid overflow value." % over)
-        # TODO: tackle with negative frac or int bits number in format
-        self.value = np.reshape(fixVal*2.**(-fmt.fracBits), shape)
+        # init instance members
         self.fmt = fmt
         self.rnd = rnd
         self.over = over
-        self.shape = shape
+
+        # cast to np if necessary
+        if not isinstance(value, np.ndarray):
+            value = np.array(value)
+
+        # to integer representation coefficient
+        toIntCoeff = 2**self.fmt.fracBits
+        # turn input into 1D array (to allow iteration through out all values)
+        self.shape = value.shape
+        self.value = np.reshape(value, -1)*toIntCoeff
+
+        self._fixSizeMask = (1 << self.fmt.bit_length())-1
+
+        # round
+        self._round()
+
+        # check overflow
+        self._over(toIntCoeff)
+        # TODO: tackle with negative frac or int bits number in format
+        self.value = np.reshape(self.value/toIntCoeff, self.shape)
+
+    # private methods
+    def _round(self):
+        '''Perform specified rounding on input values'''
+        if self.rnd == "SymInf":
+            self.value[self.value > 0] += .5
+            self.value[self.value < 0] -= .5
+        elif self.rnd == "SymZero":
+            self.value[self.value > 0] += .4
+            self.value[self.value < 0] -= .4
+        elif self.rnd == "NonSymPos":
+            self.value[self.value > 0] += .5
+            self.value[self.value < 0] -= .4
+        elif self.rnd == "NonSymNeg":
+            self.value[self.value > 0] += .4
+            self.value[self.value < 0] -= .5
+        elif self.rnd in ["ConvEven", "ConvOdd"]:
+            evenSel, oddSel = self.value.astype(int) % 2 == 0, self.value.astype(int) % 2 != 0
+            # even
+            self.value[np.logical_and(evenSel, self.value > 0)] += .4 if self.rnd == "ConvEven" else .5
+            self.value[np.logical_and(evenSel, self.value < 0)] -= .4 if self.rnd == "ConvEven" else .5
+            # odd
+            self.value[np.logical_and(oddSel, self.value > 0)] += .5 if self.rnd == "ConvEven" else .4
+            self.value[np.logical_and(oddSel, self.value < 0)] -= .5 if self.rnd == "ConvEven" else .4
+        elif self.rnd == "Floor":
+            # round to the previous largest
+            self.value = np.floor(self.value)
+        elif self.rnd == "Ceil":
+            # round to the next smallest
+            self.value = np.ceil(self.value)
+        else:
+            raise ValueError("_ERROR_: %r is not valid round value." % self.rnd)
+        # convert to integer
+        self.value = self.value.astype(int)
+
+    def _over(self, toIntCoeff):
+        '''Implement specified overflow method on input value'''
+        if self.over == "Sat":
+            self.value = np.maximum(
+                np.minimum(self.value, self.fmt.max()*toIntCoeff),
+                self.fmt.min()*toIntCoeff)
+        elif self.over == "Wrap":
+            # selection masks
+            highBitMask = (1 << (self.fmt.bit_length()-1))
+            # pos / neg selector
+            self.value = np_and(self.value, self._fixSizeMask)
+            posSel = np_and(self.value, highBitMask) == 0
+            negSel = np.logical_not(posSel)
+            if self.fmt.signed:
+                # non negative
+                self.value[posSel] = self.value[posSel]
+                # negative
+                self.value[negSel] = -np_and((np_not(self.value[negSel]) + 1), self._fixSizeMask)
+        else:
+            raise ValueError("_ERROR_: %r is not valid overflow value." % self.over)
 
     # methods
-
     def change_fix(self,
                    newFmt: fu.FixFmt,
                    newRnd: str=None,
@@ -121,26 +146,28 @@ class FixNum:
         :param newOver: new saturation method, if not specified current is used
         """
         return FixNum(self.value, newFmt,
-                      newRnd if newRnd is not None else self.rnd,
-                      newOver if newOver is not None else self.over)
+                      self.rnd if newRnd is None else newRnd,
+                      self.over if newOver is None else newOver)
 
+    @property
     def bin(self):
         tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
-        bitSel = 2**(self.fmt.bit_length())-1
         tmpBin = np.array([bin(np.int(x)) if x >= 0 else
-                           bin((~np.int(-x) + 1) & bitSel) for x in tmpVal])
+                           bin((~np.int(-x) + 1) & self._fixSizeMask) for x in tmpVal])
         return np.reshape(tmpBin, self.shape)
 
+    @property
     def hex(self):
-        return np.array([hex(x) for x in self.int()])
+        return np.array([hex(x) for x in self.int])
 
+    @property
     def int(self):
         tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
-        bitSel = 2**(self.fmt.bit_length())-1
         tmpBin = np.array([np.int(x) if x >= 0 else
-                           (~np.int(-x) + 1) & bitSel for x in tmpVal])
+                           (~np.int(-x) + 1) & self._fixSizeMask for x in tmpVal])
         return np.reshape(tmpBin, self.shape)
 
+    @property
     def fimath(self):
         """Return fix math as tuple (round method, overflow mode).
         """
@@ -165,18 +192,23 @@ class FixNum:
     def __len__(self):
         return len(self.value)
 
+    def __contains__(self, elem):
+        if isinstance(elem, FixNum):
+            return elem.value in self.value
+        else:
+            return elem in self.value
+
     # operators
 
     # ## Addition methods
-
     def __add__(self, other):
         tmpVal = self.value + other.value
         tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
                            max(self.fmt.intBits, other.fmt.intBits)+1,
                            max(self.fmt.fracBits, other.fmt.fracBits))
         if (self.rnd != other.rnd) or (self.over != other.over):
-            print('_WARNING_: operators have round and / or overflow methods \
-not equal, those of first operator will be considered')
+            print('_WARNING_: operators have round and/or overflow methods ' +
+                  'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
@@ -193,15 +225,14 @@ not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Subtraction methods
-
     def __sub__(self, other):
         tmpVal = self.value - other.value
         tmpFmt = fu.FixFmt(max(self.fmt.signed, other.fmt.signed),
                            max(self.fmt.intBits, other.fmt.intBits)+1,
                            max(self.fmt.fracBits, other.fmt.fracBits))
         if (self.rnd != other.rnd) or (self.over != other.over):
-            print('_WARNING_: operators have round and / or overflow methods \
-not equal, those of first operator will be considered')
+            print('_WARNING_: operators have round and / or overflow methods ' +
+                  'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def sub(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
@@ -218,7 +249,6 @@ not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Multiplication methods
-
     def __mul__(self, other):
         tmpVal = self.value * other.value
         tmpSign = max(self.fmt.signed, other.fmt.signed)
@@ -227,8 +257,8 @@ not equal, those of first operator will be considered')
                            tmpSign else self.fmt.intBits + other.fmt.intBits,
                            self.fmt.fracBits + other.fmt.fracBits)
         if (self.rnd != other.rnd) or (self.over != other.over):
-            print('_WARNING_: operators have round and / or overflow methods \
-not equal, those of first operator will be considered')
+            print('_WARNING_: operators have round and / or overflow methods ' +
+                  'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def mult(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
@@ -247,6 +277,5 @@ not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Negation method
-
     def __neg__(self):
         return FixNum(-self.value, self.fmt, self.rnd, self.over)
