@@ -3,14 +3,12 @@ import numpy as np
 import importlib as imp
 
 import nsf_fix as fi
-import nsf_fix_util as fu
 
 ########################################################
 # IMPORTANT: run this script from its parent directory #
 ########################################################
 
 # reload module to be sure last changes are taken into account
-imp.reload(fu)
 imp.reload(fi)
 
 
@@ -21,7 +19,7 @@ class TestNsfFixKnownValues(utst.TestCase):
     # ******************************
 
     # define format
-    s_4 = fu.FixFmt(True, 0, 4)
+    s_4 = fi.FixFmt(True, 0, 4)
     # create test vector
     realCoeff = 2**s_4.fracBits
     tstPatternSigned = np.array([2.6, 2.5, 2.4, 1.7, 1.5, 1.2,
@@ -63,7 +61,7 @@ class TestNsfFixKnownValues(utst.TestCase):
     # TEST ROUND METHODS - UNSIGNED
     # ******************************
     # define format
-    u_4 = fu.FixFmt(False, 0, 4)
+    u_4 = fi.FixFmt(False, 0, 4)
     # create test vector
     realCoeff = 2**s_4.fracBits
     tstPatternUnsigned = np.array([2.6, 2.5, 2.4, 1.7, 1.5, 1.2,
