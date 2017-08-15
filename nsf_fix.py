@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
+from copy import copy
 # for decorator
 import time
 
@@ -42,8 +43,8 @@ has to be positive")
         return "(" + str(self.signed) + "," + str(self.intBits) + "," + str(self.fracBits) + ")"
 
     def __repr__(self):
-        return "(" + str(self.signed) + "," + str(self.intBits) + "," + str(self.fracBits) + ")\n\n" \
-           + "<nsf_fix_util.FixFmt at " + hex(id(self)) + '>'
+        return """(""" + str(self.signed) + "," + str(self.intBits) + "," + str(self.fracBits) + """)
+""" + "<nsf_fix_util.FixFmt at " + hex(id(self)) + '>'
 
     @property
     def bit_length(self):
@@ -130,6 +131,7 @@ class FixNum:
         self.fmt = fmt
         self.rnd = rnd
         self.over = over
+        self._index = 0
 
         # cast to np if necessary
         if not isinstance(value, np.ndarray):
@@ -206,7 +208,7 @@ class FixNum:
         else:
             raise ValueError("_ERROR_: %r is not valid overflow value." % self.over)
 
-    # methods
+    # public methods
     def change_fix(self,
                    newFmt: FixFmt,
                    newRnd: str=None,
@@ -245,33 +247,57 @@ class FixNum:
         """
         return (self.rnd, self.over)
 
+    # data model
+    # # representation
     def __str__(self):
         return """
         """ + str(self.value) + """
-        format: """ + str(self.fmt) + """
-        round: """ + self.rnd + """
-        saturate: """ + self.over
+        fmt: """ + str(self.fmt) + """
+        rnd: """ + self.rnd + """ over: """ + self.over
 
     def __repr__(self):
         return """
         """ + str(self.value) + """
-        format: """ + str(self.fmt) + """
-        round: """ + self.rnd + """
-        saturate: """ + self.over + """
+        fmt: """ + str(self.fmt) + """
+        rnd: """ + self.rnd + """ over: """ + self.over + """
 
         <nsf_fix.FixNum at """ + hex(id(self)) + '>'
 
-    def __len__(self):
-        return len(self.value)
-
+    # # container methods
     def __contains__(self, elem):
         if isinstance(elem, FixNum):
             return elem.value in self.value
         else:
             return elem in self.value
 
-    # operators
+    def __getitem__(self, k):
+        sliced = copy(self)
+        sliced.value = self.value[k]
+        return sliced
 
+    def __setitem__(self, k, repleaceValue):
+        if isinstance(repleaceValue, FixNum):
+            self.value[k] = repleaceValue.value
+        else:
+            self.value[k] = repleaceValue
+
+    def __len__(self):
+        return self.shape
+
+    # # generator
+    def __iter__(self):
+        self._index = 0
+        return self
+
+    def __next__(self):
+        try:
+            ret = FixNum(self.value[self._index], self.fmt, self.rnd, self.over)
+            self._index += 1
+        except:
+            raise StopIteration
+        return ret
+
+    # # operators
     # ## Addition methods
     def __add__(self, other):
         '''x + y --> x.__add__(y)'''
@@ -352,3 +378,22 @@ class FixNum:
     # ## Negation method
     def __neg__(self):
         return FixNum(-self.value, self.fmt, self.rnd, self.over)
+
+    # ## Rich comparison
+    def __lt__(self, other):
+        return self.value < other
+
+    def __le__(self, other):
+        return self.value <= other
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __ne__(self, other):
+        return self.value != other
+
+    def __gt__(self, other):
+        return self.value > other
+
+    def __ge__(self, other):
+        return self.value >= other
