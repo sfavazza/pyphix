@@ -105,7 +105,7 @@ class FixNum:
     Floor     : round to largest previous
     Ceil      : round to smallest following
 
-    Saturation method
+    Saturation methods
     Sat  : saturate
     Wrap : wrap around -- DEFAULT
 
@@ -293,7 +293,7 @@ class FixNum:
         try:
             ret = FixNum(self.value[self._index], self.fmt, self.rnd, self.over)
             self._index += 1
-        except:
+        except IndexError:
             raise StopIteration
         return ret
 
