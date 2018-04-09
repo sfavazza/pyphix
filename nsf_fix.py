@@ -1,20 +1,25 @@
+"""Module implementing fix-point arithmentic classes
+"""
+# for decorator
+import time
+# imports for module
+from copy import copy
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
-from copy import copy
-# for decorator
-import time
-
+import pdb
 
 # function performance decorator
-def time_perfomance(f):
+def time_perfomance(func):
+    """Decorate methods to estimate their time performance"""
 
     def function_exec_time_wrapper(*args, **kwargs):
-        startTime = time.time()
-        functionObject = f(*args, **kwargs)
-        endTime = time.time()
-        print("Time to run function " + f.__name__ + ": {}".format(endTime - startTime))
-        return functionObject
+        """Estimate time implied to run given function"""
+        start_time = time.time()
+        function_object = func(*args, **kwargs)
+        end_time = time.time()
+        print(f'Time to run function {func.__name__}: {end_time - start_time}')
+        return function_object
 
     return function_exec_time_wrapper
 
@@ -25,49 +30,46 @@ class FixFmt:
 
     def __init__(self,
                  signed: bool,
-                 intBits,
-                 fracBits):
+                 int_bits,
+                 frac_bits):
 
-        self.signed = signed
-        self.intBits = intBits
-        self.fracBits = fracBits
-
-        if type(signed) != bool:
+        if not isinstance(signed, bool):
             raise TypeError("_ERROR_: sign of format must be bool")
 
-        if intBits + fracBits <= 0:
-            raise ValueError("_ERROR_: sum of integer and fractional bits \
-has to be positive")
+        if int_bits + frac_bits <= 0:
+            raise ValueError("_ERROR_: sum of integer and fractional bits has to be positive")
+
+        self.signed = signed
+        self.int_bits = int_bits
+        self.frac_bits = frac_bits
 
     def __str__(self):
-        return "(" + str(self.signed) + "," + str(self.intBits) + "," + str(self.fracBits) + ")"
+        return "(" + str(self.signed) + "," + str(self.int_bits) + "," + str(self.frac_bits) + ")"
 
     def __repr__(self):
-        return """(""" + str(self.signed) + "," + str(self.intBits) + "," + str(self.fracBits) + """)
+        return """(""" + str(self.signed) + "," + str(self.int_bits) + "," + str(self.frac_bits) + """)
 """ + "<nsf_fix_util.FixFmt at " + hex(id(self)) + '>'
 
     @property
     def bit_length(self):
-        return int(self.signed) + self.intBits + self.fracBits
+        return int(self.signed) + self.int_bits + self.frac_bits
 
     @property
     def max(self):
         """Return max representable value by current fix format objext
         """
-        toRealCoeff = (1 << self.fracBits)
+        toRealCoeff = (1 << self.frac_bits)
         if self.signed:
             return ((1 << (self.bit_length-1))-1)/toRealCoeff
-        else:
-            return ((1 << (self.bit_length))-1)/toRealCoeff
+        return ((1 << (self.bit_length))-1)/toRealCoeff
 
     @property
     def min(self):
         """Return min representable value by current fix format objext
         """
         if self.signed:
-            return -2**(self.bit_length-1)/2**self.fracBits
-        else:
-            return 0
+            return -2**(self.bit_length-1)/2**self.frac_bits
+        return 0
 
     @property
     def range(self):
@@ -80,16 +82,16 @@ has to be positive")
         """Return object as a tuple.
         """
         return (self.signed,
-                self.intBits,
-                self.fracBits)
+                self.int_bits,
+                self.frac_bits)
 
     @property
     def list(self):
         """Return object as a list.
         """
         return [self.signed,
-                self.intBits,
-                self.fracBits]
+                self.int_bits,
+                self.frac_bits]
 
 
 class FixNum:
@@ -133,12 +135,11 @@ class FixNum:
         self.over = over
         self._index = 0
 
-        # cast to np if necessary
-        if not isinstance(value, np.ndarray):
-            value = np.array(value)
+        # always cast to float64
+        value = np.array(value, dtype=np.float64)
 
         # to integer representation coefficient
-        toIntCoeff = 2**self.fmt.fracBits
+        toIntCoeff = 2**self.fmt.frac_bits
         # turn input into 1D array (to allow iteration through out all values)
         self.shape = value.shape
         self.value = np.reshape(value, -1)*toIntCoeff
@@ -150,12 +151,12 @@ class FixNum:
 
         # check overflow
         self._over(toIntCoeff)
-        # TODO: tackle with negative frac or int bits number in format
+        # TODO: tackle with negative frac or negative int bits number in format
         self.value = np.reshape(self.value/toIntCoeff, self.shape)
 
     # private methods
     def _round(self):
-        '''Perform specified rounding on input values'''
+        """Perform specified rounding on input values"""
         if self.rnd == "SymInf":
             self.value[self.value > 0] += .5
             self.value[self.value < 0] -= .5
@@ -188,7 +189,7 @@ class FixNum:
         self.value = self.value.astype(int)
 
     def _over(self, toIntCoeff):
-        '''Implement specified overflow method on input value'''
+        """Implement specified overflow method on input value"""
         if self.over == "Sat":
             self.value = np.maximum(
                 np.minimum(self.value, self.fmt.max*toIntCoeff),
@@ -210,33 +211,34 @@ class FixNum:
 
     # public methods
     def change_fix(self,
-                   newFmt: FixFmt,
-                   newRnd: str=None,
-                   newOver: str=None):
+                   new_fmt: FixFmt,
+                   new_rnd: str = None,
+                   new_over: str = None):
         """Change fix parameters of current object.
+        WARNING: this action may lead to information loss due to new format and round/overflow methods.
 
-        :param newFmt: new format (mandatory)
-        :param newRnd: new round method, if not specified current is used
-        :param newOver: new saturation method, if not specified current is used
+        :param new_fmt: new format (mandatory)
+        :param new_rnd: new round method, if not specified current is used
+        :param new_over: new saturation method, if not specified current is used
         """
-        return FixNum(self.value, newFmt,
-                      self.rnd if newRnd is None else newRnd,
-                      self.over if newOver is None else newOver)
+        return FixNum(self.value, new_fmt,
+                      self.rnd if new_rnd is None else new_rnd,
+                      self.over if new_over is None else new_over)
 
     @property
     def bin(self):
-        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
+        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.frac_bits
         tmpBin = np.array([bin(np.int(x)) if x >= 0 else
                            bin((~np.int(-x) + 1) & self._fixSizeMask) for x in tmpVal])
         return np.reshape(tmpBin, self.shape)
 
     @property
     def hex(self):
-        return np.array([hex(x) for x in self.int])
+        return np.array([hex(x) for x in self.int()])
 
     @property
     def int(self):
-        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.fracBits
+        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.frac_bits
         tmpBin = np.array([np.int(x) if x >= 0 else
                            (~np.int(-x) + 1) & self._fixSizeMask for x in tmpVal])
         return np.reshape(tmpBin, self.shape)
@@ -267,8 +269,7 @@ class FixNum:
     def __contains__(self, elem):
         if isinstance(elem, FixNum):
             return elem.value in self.value
-        else:
-            return elem in self.value
+        return elem in self.value
 
     def __getitem__(self, k):
         sliced = copy(self)
@@ -300,51 +301,49 @@ class FixNum:
     # # operators
     # ## Addition methods
     def __add__(self, other):
-        '''x + y --> x.__add__(y)'''
+        """x + y --> x.__add__(y)"""
         tmpVal = self.value + other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                        max(self.fmt.intBits, other.fmt.intBits)+1,
-                        max(self.fmt.fracBits, other.fmt.fracBits))
+                        max(self.fmt.int_bits, other.fmt.int_bits)+1,
+                        max(self.fmt.frac_bits, other.fmt.frac_bits))
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and/or overflow methods ' +
                   'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        '''
+        """
         Addition method.
         It allows to decide output format.
         If not indicated, full-precision format will be adopted
-        '''
+        """
         tmpVal = self.value + other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                        max(self.fmt.intBits, other.fmt.intBits)+1,
-                        max(self.fmt.fracBits, other.fmt.fracBits)
-                        ) if outFmt is None else outFmt
+                        max(self.fmt.int_bits, other.fmt.int_bits)+1,
+                        max(self.fmt.frac_bits, other.fmt.frac_bits)) if outFmt is None else outFmt
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Subtraction methods
     def __sub__(self, other):
         tmpVal = self.value - other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                        max(self.fmt.intBits, other.fmt.intBits)+1,
-                        max(self.fmt.fracBits, other.fmt.fracBits))
+                        max(self.fmt.int_bits, other.fmt.int_bits)+1,
+                        max(self.fmt.frac_bits, other.fmt.frac_bits))
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods ' +
                   'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def sub(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        '''
+        """
         Subtraction method.
         It allows to decide output format.
         If not indicated, full-precision format will be adopted
-        '''
+        """
         tmpVal = self.value - other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                        max(self.fmt.intBits, other.fmt.intBits)+1,
-                        max(self.fmt.fracBits, other.fmt.fracBits)
-                        ) if outFmt is None else outFmt
+                        max(self.fmt.int_bits, other.fmt.int_bits)+1,
+                        max(self.fmt.frac_bits, other.fmt.frac_bits)) if outFmt is None else outFmt
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Multiplication methods
@@ -352,34 +351,33 @@ class FixNum:
         tmpVal = self.value * other.value
         tmpSign = max(self.fmt.signed, other.fmt.signed)
         tmpFmt = FixFmt(tmpSign,
-                        self.fmt.intBits + other.fmt.intBits + 1 if
-                        tmpSign else self.fmt.intBits + other.fmt.intBits,
-                        self.fmt.fracBits + other.fmt.fracBits)
+                        self.fmt.int_bits + other.fmt.int_bits + 1 if
+                        tmpSign else self.fmt.int_bits + other.fmt.int_bits,
+                        self.fmt.frac_bits + other.fmt.frac_bits)
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods ' +
                   'not equal, those of first operator will be considered')
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def mult(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        '''
+        """
         Multiplication method.
         It allows to decide output format.
         If not indicated, full-precision format will be adopted
-        '''
+        """
         tmpVal = self.value * other.value
         tmpSign = max(self.fmt.signed, other.fmt.signed)
         tmpFmt = FixFmt(tmpSign,
-                        self.fmt.intBits + other.fmt.intBits + 1 if
-                        tmpSign else self.fmt.intBits + other.fmt.intBits,
-                        self.fmt.fracBits + other.fmt.fracBits
-                        ) if outFmt is None else outFmt
+                        self.fmt.int_bits + other.fmt.int_bits + 1 if
+                        tmpSign else self.fmt.int_bits + other.fmt.int_bits,
+                        self.fmt.frac_bits + other.fmt.frac_bits) if outFmt is None else outFmt
         return FixNum(tmpVal, tmpFmt, outRnd, outOver)
 
     # ## Negation method
     def __neg__(self):
         return FixNum(-self.value, self.fmt, self.rnd, self.over)
 
-    # ## Rich comparison
+    # ## Comparison methods
     def __lt__(self, other):
         return self.value < other
 
