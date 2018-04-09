@@ -136,23 +136,28 @@ class FixNum:
         self._index = 0
 
         # always cast to float64
-        value = np.array(value, dtype=np.float64)
+        try:
+            value = np.array(value, dtype=np.float64)
 
-        # to integer representation coefficient
-        toIntCoeff = 2**self.fmt.frac_bits
-        # turn input into 1D array (to allow iteration through out all values)
-        self.shape = value.shape
-        self.value = np.reshape(value, -1)*toIntCoeff
+            # to integer representation coefficient
+            toIntCoeff = 2**self.fmt.frac_bits
+            # turn input into 1D array (to allow iteration through out all values)
+            self.shape = value.shape
+            self.value = np.reshape(value, -1)*toIntCoeff
 
-        self._fixSizeMask = (1 << self.fmt.bit_length)-1
+            self._fixSizeMask = (1 << self.fmt.bit_length)-1
 
-        # round
-        self._round()
+            # round
+            self._round()
 
-        # check overflow
-        self._over(toIntCoeff)
-        # TODO: tackle with negative frac or negative int bits number in format
-        self.value = np.reshape(self.value/toIntCoeff, self.shape)
+            # check overflow
+            self._over(toIntCoeff)
+            # TODO: tackle with negative frac or negative int bits number in format
+            self.value = np.reshape(self.value/toIntCoeff, self.shape)
+
+        except ValueError:
+            print('Wrong input value type, only numeric list/np.arrays are allowed')
+            raise
 
     # private methods
     def _round(self):
