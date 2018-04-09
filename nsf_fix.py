@@ -52,6 +52,7 @@ class FixFmt:
 
     @property
     def bit_length(self):
+        """Return the number of bits required to represent a number with current fix format"""
         return int(self.signed) + self.int_bits + self.frac_bits
 
     @property
