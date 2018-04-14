@@ -3,7 +3,6 @@
 # for decorator
 import time
 # imports for module
-from copy import copy
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
@@ -160,59 +159,61 @@ class FixNum:
             raise
 
     # private methods
-    def _round(self):
+    def _round(self, value):
         """Perform specified rounding on input values"""
         if self.rnd == "SymInf":
-            self.value[self.value > 0] += .5
-            self.value[self.value < 0] -= .5
+            value[value > 0] += .5
+            value[value < 0] -= .5
         elif self.rnd == "SymZero":
-            self.value[self.value > 0] += .4
-            self.value[self.value < 0] -= .4
+            value[value > 0] += .4
+            value[value < 0] -= .4
         elif self.rnd == "NonSymPos":
-            self.value[self.value > 0] += .5
-            self.value[self.value < 0] -= .4
+            value[value > 0] += .5
+            value[value < 0] -= .4
         elif self.rnd == "NonSymNeg":
-            self.value[self.value > 0] += .4
-            self.value[self.value < 0] -= .5
+            value[value > 0] += .4
+            value[value < 0] -= .5
         elif self.rnd in ["ConvEven", "ConvOdd"]:
-            evenSel, oddSel = self.value.astype(int) % 2 == 0, self.value.astype(int) % 2 != 0
+            evenSel, oddSel = value.astype(int) % 2 == 0, value.astype(int) % 2 != 0
             # even
-            self.value[np.logical_and(evenSel, self.value > 0)] += .4 if self.rnd == "ConvEven" else .5
-            self.value[np.logical_and(evenSel, self.value < 0)] -= .4 if self.rnd == "ConvEven" else .5
+            value[np.logical_and(evenSel, value > 0)] += .4 if self.rnd == "ConvEven" else .5
+            value[np.logical_and(evenSel, value < 0)] -= .4 if self.rnd == "ConvEven" else .5
             # odd
-            self.value[np.logical_and(oddSel, self.value > 0)] += .5 if self.rnd == "ConvEven" else .4
-            self.value[np.logical_and(oddSel, self.value < 0)] -= .5 if self.rnd == "ConvEven" else .4
+            value[np.logical_and(oddSel, value > 0)] += .5 if self.rnd == "ConvEven" else .4
+            value[np.logical_and(oddSel, value < 0)] -= .5 if self.rnd == "ConvEven" else .4
         elif self.rnd == "Floor":
             # round to the previous largest
-            self.value = np.floor(self.value)
+            value = np.floor(value)
         elif self.rnd == "Ceil":
             # round to the next smallest
-            self.value = np.ceil(self.value)
+            value = np.ceil(value)
         else:
             raise ValueError("_ERROR_: %r is not valid round value." % self.rnd)
         # convert to integer
-        self.value = self.value.astype(int)
+        return value.astype(int)
 
-    def _over(self, toIntCoeff):
+    def _over(self, value):
         """Implement specified overflow method on input value"""
         if self.over == "Sat":
-            self.value = np.maximum(
-                np.minimum(self.value, self.fmt.max*toIntCoeff),
-                self.fmt.min*toIntCoeff)
+            value = np.maximum(
+                np.minimum(value, self.fmt.max*self.to_int_coeff),
+                self.fmt.min*self.to_int_coeff)
         elif self.over == "Wrap":
             # selection masks
             highBitMask = (1 << (self.fmt.bit_length-1))
             # pos / neg selector
-            self.value = np_and(self.value, self._fixSizeMask)
-            posSel = np_and(self.value, highBitMask) == 0
+            value = np_and(value, self._fix_size_mask)
+            posSel = np_and(value, highBitMask) == 0
             negSel = np.logical_not(posSel)
             if self.fmt.signed:
                 # non negative
-                self.value[posSel] = self.value[posSel]
+                value[posSel] = value[posSel]
                 # negative
-                self.value[negSel] = -np_and((np_not(self.value[negSel]) + 1), self._fixSizeMask)
+                value[negSel] = -np_and((np_not(value[negSel]) + 1), self._fix_size_mask)
         else:
             raise ValueError("_ERROR_: %r is not valid overflow value." % self.over)
+
+        return value
 
     # public methods
     def change_fix(self,
@@ -230,23 +231,32 @@ class FixNum:
                       self.rnd if new_rnd is None else new_rnd,
                       self.over if new_over is None else new_over)
 
+    def _valueToLine(self, value):
+        return np.reshape(value, -1)
+
+    def _tmpInt(self):
+        tmp_value = self._valueToLine(self.value) * 2**self.fmt.frac_bits
+        return np.array([np.int(x) if x >= 0 else
+                         (np.int(x) & self._fix_size_mask) for x in tmp_value])
+
     @property
     def bin(self):
-        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.frac_bits
-        tmpBin = np.array([bin(np.int(x)) if x >= 0 else
-                           bin((~np.int(-x) + 1) & self._fixSizeMask) for x in tmpVal])
-        return np.reshape(tmpBin, self.shape)
+        tmp_bin = np.array([bin(x) for x in self._tmpInt()])
+        # correct string representation
+        tmp_bin = np.array(['0b' + (self.fmt.bit_length - len(x[2:])) * '0' + x[2:] for x in tmp_bin])
+        return np.reshape(tmp_bin, self.shape)
 
     @property
     def hex(self):
-        return np.array([hex(x) for x in self.int()])
+        tmp_hex = np.array([hex(x) for x in self._valueToLine(self.int)])
+        # correct string representation
+        tmp_hex = np.array(['0x' + (int(np.ceil(self.fmt.bit_length / 4)) - len(x[2:])) * '0' + x[2:]
+                            for x in tmp_hex])
+        return np.reshape(tmp_hex, self.shape)
 
     @property
     def int(self):
-        tmpVal = np.reshape(self.value, -1) * 2**self.fmt.frac_bits
-        tmpBin = np.array([np.int(x) if x >= 0 else
-                           (~np.int(-x) + 1) & self._fixSizeMask for x in tmpVal])
-        return np.reshape(tmpBin, self.shape)
+        return np.reshape(self._tmpInt(), self.shape)
 
     @property
     def fimath(self):
@@ -276,16 +286,14 @@ class FixNum:
             return elem.value in self.value
         return elem in self.value
 
-    def __getitem__(self, k):
-        sliced = copy(self)
-        sliced.value = self.value[k]
-        return sliced
+    def __getitem__(self, idx):
+        return FixNum(self.value[idx], self.fmt, self.rnd, self.over)
 
-    def __setitem__(self, k, repleaceValue):
+    def __setitem__(self, idx, repleaceValue):
         if isinstance(repleaceValue, FixNum):
-            self.value[k] = repleaceValue.value
+            self.value[idx] = self._round(repleaceValue.value)
         else:
-            self.value[k] = repleaceValue
+            self.value[idx] = self._round(repleaceValue)
 
     def __len__(self):
         return self.shape
