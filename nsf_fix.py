@@ -9,6 +9,7 @@ from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
 import pdb
 
+
 # function performance decorator
 def time_perfomance(func):
     """Decorate methods to estimate their time performance"""
@@ -136,18 +137,16 @@ class FixNum:
         self.over = over
         self._index = 0
 
+        # internal constants
+        self.to_int_coeff = 2**self.fmt.frac_bits  # to integer representation coefficient
+        self._fix_size_mask = (1 << self.fmt.bit_length)-1  # correct representation
+
         # always cast to float64
         try:
             value = np.array(value, dtype=np.float64)
 
-            # to integer representation coefficient
-            toIntCoeff = 2**self.fmt.frac_bits
             # turn input into 1D array (to allow iteration through out all values)
             self.shape = value.shape
-            self.value = np.reshape(value, -1)*toIntCoeff
-
-            self._fixSizeMask = (1 << self.fmt.bit_length)-1
-
             # round
             self._round()
 
