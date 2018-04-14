@@ -6,7 +6,6 @@ import time
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
-import pdb
 
 
 # function performance decorator
@@ -142,25 +141,44 @@ class FixNum:
 
         # always cast to float64
         try:
-            value = np.array(value, dtype=np.float64)
+            # turn into array
+            self.value, self.shape = self._toIndexableArray(value)
+            # round and overflow process
+            self.value = self._over(self._round(self.value*self.to_int_coeff))
 
-            # turn input into 1D array (to allow iteration through out all values)
-            self.shape = value.shape
-            # round
-            self._round()
-
-            # check overflow
-            self._over(toIntCoeff)
             # TODO: tackle with negative frac or negative int bits number in format
-            self.value = np.reshape(self.value/toIntCoeff, self.shape)
+            self.value = self.value/self.to_int_coeff
 
         except ValueError:
             print('Wrong input value type, only numeric list/np.arrays are allowed')
             raise
 
+    # support methods
+    def _valueToLine(self, value):
+        """Turn input value into vector form"""
+        return np.reshape(value, -1)
+
+    def _tmpInt(self):
+        """Geneate integer representation of the fix object"""
+        tmp_value = self._valueToLine(self.value) * 2**self.fmt.frac_bits
+        return np.array([np.int(x) if x >= 0 else
+                         (np.int(x) & self._fix_size_mask) for x in tmp_value])
+
+    def _toIndexableArray(self, value):
+        """Turn input value into an indexable array.
+        Return a tuple (value, shape)"""
+        # turn into array
+        value = np.array(value, dtype=np.float64)
+        shape = (1, ) if value.shape is () else value.shape
+        # ensure also single values are indexable
+        return (np.reshape(value, shape), shape)
+
     # private methods
     def _round(self, value):
-        """Perform specified rounding on input values"""
+        """Perform specified rounding on input values
+
+        value : it must be an indexable vector (even when a single number is provided)
+        """
         if self.rnd == "SymInf":
             value[value > 0] += .5
             value[value < 0] -= .5
@@ -231,14 +249,6 @@ class FixNum:
                       self.rnd if new_rnd is None else new_rnd,
                       self.over if new_over is None else new_over)
 
-    def _valueToLine(self, value):
-        return np.reshape(value, -1)
-
-    def _tmpInt(self):
-        tmp_value = self._valueToLine(self.value) * 2**self.fmt.frac_bits
-        return np.array([np.int(x) if x >= 0 else
-                         (np.int(x) & self._fix_size_mask) for x in tmp_value])
-
     @property
     def bin(self):
         tmp_bin = np.array([bin(x) for x in self._tmpInt()])
@@ -291,9 +301,11 @@ class FixNum:
 
     def __setitem__(self, idx, repleaceValue):
         if isinstance(repleaceValue, FixNum):
-            self.value[idx] = self._round(repleaceValue.value)
+            self.value[idx] = self._over(self._round(
+                self._toIndexableArray(repleaceValue.value)[0]*self.to_int_coeff))/self.to_int_coeff
         else:
-            self.value[idx] = self._round(repleaceValue)
+            self.value[idx] = self._over(self._round(
+                self._toIndexableArray(repleaceValue)[0]*self.to_int_coeff))/self.to_int_coeff
 
     def __len__(self):
         return self.shape
