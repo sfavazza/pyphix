@@ -1,94 +1,78 @@
-"""Module implementing fix-point arithmentic classes
-"""
-# for decorator
-import time
-# imports for module
+"""Module implementing fix-point arithmentic classes."""
+
+__author__ = "Samuele FAVAZZA"
+__copyright__ = "Copyright 2018, Samuele FAVAZZA"
+
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
 
-
-# function performance decorator
-def time_perfomance(func):
-    """Decorate methods to estimate their time performance"""
-
-    def function_exec_time_wrapper(*args, **kwargs):
-        """Estimate time implied to run given function"""
-        start_time = time.time()
-        function_object = func(*args, **kwargs)
-        end_time = time.time()
-        print(f'Time to run function {func.__name__}: {end_time - start_time}')
-        return function_object
-
-    return function_exec_time_wrapper
+from . import generalutil as gu
 
 
 class FixFmt:
     """Fix format class
+
+    :param signed: indicate whether the representation is signed (True) or unsigned
+    :param int_bits: number of bits representing the integer part
+    :param frac_bits: number of bits representing the fractional part
+
+    :type signed: bool
+    :type int_bits: int
+    :type frac_bits: int
     """
 
-    def __init__(self,
-                 signed: bool,
-                 int_bits,
-                 frac_bits):
+    def __init__(self, signed, int_bits, frac_bits):
 
-        if not isinstance(signed, bool):
-            raise TypeError("_ERROR_: sign of format must be bool")
+        if int_bits < 0 or frac_bits < 0:
+            raise ValueError("Integer and fractional sizes must be positive.")
 
-        if int_bits + frac_bits <= 0:
-            raise ValueError("_ERROR_: sum of integer and fractional bits has to be positive")
-
-        self.signed = signed
-        self.int_bits = int_bits
-        self.frac_bits = frac_bits
+        self.signed = gu.check_args(signed, bool)
+        self.int_bits = gu.check_args(int_bits, int)
+        self.frac_bits = gu.check_args(frac_bits, int)
 
     def __str__(self):
-        return "(" + str(self.signed) + "," + str(self.int_bits) + "," + str(self.frac_bits) + ")"
+        return f"({self.signed}, {self.int_bits}, {self.frac_bits})"
 
     def __repr__(self):
-        return """(""" + str(self.signed) + "," + str(self.int_bits) + "," + str(self.frac_bits) + """)
-""" + "<nsf_fix_util.FixFmt at " + hex(id(self)) + '>'
+        return f"""{self.__str__()}
+<{gu.get_class_name(self)} at {hex(id(self))}>"""
 
     @property
     def bit_length(self):
-        """Return the number of bits required to represent a number with current fix format"""
+        """Return the number of bits required to represent a number with current fix format."""
         return int(self.signed) + self.int_bits + self.frac_bits
 
     @property
-    def max(self):
-        """Return max representable value by current fix format objext
-        """
+    def maxvalue(self):
+        """Return max representable value by current fix format objext."""
         toRealCoeff = (1 << self.frac_bits)
         if self.signed:
             return ((1 << (self.bit_length-1))-1)/toRealCoeff
         return ((1 << (self.bit_length))-1)/toRealCoeff
 
     @property
-    def min(self):
-        """Return min representable value by current fix format objext
-        """
+    def minvalue(self):
+        """Return min representable value by current fix format objext."""
         if self.signed:
             return -2**(self.bit_length-1)/2**self.frac_bits
         return 0
 
     @property
     def range(self):
-        """Return the range representable by fix format object as tuple (min, max)
-        """
-        return (self.max, self.min)
+        """Return the range representable by fix format object as tuple (min, max)."""
+        return (self.minvalue, self.maxvalue)
 
     @property
-    def tuple(self):
-        """Return object as a tuple.
-        """
+    def tuplefmt(self):
+        """Return object as a tuple."""
         return (self.signed,
                 self.int_bits,
                 self.frac_bits)
 
     @property
-    def list(self):
-        """Return object as a list.
-        """
+    def listfmt(self):
+        """Return object as a list."""
         return [self.signed,
                 self.int_bits,
                 self.frac_bits]
@@ -97,30 +81,33 @@ class FixFmt:
 class FixNum:
     """Fixed point number class
 
-    Round methods:
-    SymInf    : positive numbers tends to +inf, negative numbers to -inf
-    SymZero   : round toward zero -- DEFAULT
-    NonSymPos : round toward +inf
-    NonSymNeg : round toward -inf
-    ConvEven  : round to closest even
-    ConvOdd   : round to closest odd
-    Floor     : round to largest previous
-    Ceil      : round to smallest following
+    =============
+    Round methods
+    =============
+    ``SymInf``    : positive numbers tends to +inf, negative numbers to -inf
+    ``SymZero``   : round toward zero -- DEFAULT
+    ``NonSymPos`` : round toward +inf
+    ``NonSymNeg`` : round toward -inf
+    ``ConvEven``  : round to closest even
+    ``ConvOdd``   : round to closest odd
+    ``Floor``     : round to largest previous
+    ``Ceil``      : round to smallest following
 
+    ==================
     Saturation methods
-    Sat  : saturate
-    Wrap : wrap around -- DEFAULT
+    ==================
+    ``Sat``  : saturate
+    ``Wrap`` : wrap around -- DEFAULT
 
     :param value: value to represent in fix point
-    :type value: np.ndarray(ndim > 0), float
     :param fmt: fix point format
-    :type fmt: FixFmt
     :param rnd: round method
-    :type rnd: string
     :param over: overflow method
+
+    :type value: np.ndarray(ndim > 0) or float
+    :type fmt: FixFmt
+    :type rnd: string
     :type over: string
-    :return: fixed point object
-    :rtype: NsfFix
     """
 
     def __init__(self,
@@ -139,14 +126,14 @@ class FixNum:
         self.to_int_coeff = 2**self.fmt.frac_bits  # to integer representation coefficient
         self._fix_size_mask = (1 << self.fmt.bit_length)-1  # correct representation
 
-        # always cast to float64
+        # always cast to np.float64
         try:
             # turn into array
             self.value, self.shape = self._toIndexableArray(value)
-            # round and overflow process
+            # round and overflow process in int format
             self.value = self._over(self._round(self.value*self.to_int_coeff))
 
-            # TODO: tackle with negative frac or negative int bits number in format
+            # back to float
             self.value = self.value/self.to_int_coeff
 
         except ValueError:
@@ -214,8 +201,8 @@ class FixNum:
         """Implement specified overflow method on input value"""
         if self.over == "Sat":
             value = np.maximum(
-                np.minimum(value, self.fmt.max*self.to_int_coeff),
-                self.fmt.min*self.to_int_coeff)
+                np.minimum(value, self.fmt.maxvalue*self.to_int_coeff),
+                self.fmt.minvalue*self.to_int_coeff)
         elif self.over == "Wrap":
             # selection masks
             highBitMask = (1 << (self.fmt.bit_length-1))

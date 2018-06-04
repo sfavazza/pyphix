@@ -2,7 +2,7 @@ import unittest as utst
 import numpy as np
 import importlib as imp
 
-import nsf_fix as fi
+from pyfipo import fix as fi
 
 ########################################################
 # IMPORTANT: run this script from its parent directory #
@@ -22,16 +22,18 @@ class TestNsfFixFmtMethods(utst.TestCase):
         self.assertEqual(self.fmt.bit_length,
                          self.fmt.int_bits + self.fmt.frac_bits + int(self.fmt.signed))
         # max
-        self.assertEqual(self.fmt.max, 2**self.fmt.int_bits - 2**(-self.fmt.frac_bits))
+        exp_max = 2**self.fmt.int_bits - 2**(-self.fmt.frac_bits)
+        self.assertEqual(self.fmt.maxvalue, exp_max)
         # min
-        self.assertEqual(self.fmt.min, -2**self.fmt.int_bits)
+        exp_min = -2**self.fmt.int_bits
+        self.assertEqual(self.fmt.minvalue, exp_min)
         # range
         self.assertTrue(isinstance(self.fmt.range, tuple))
-        self.assertEqual(self.fmt.range, (self.fmt.max, self.fmt.min))
+        self.assertEqual(self.fmt.range, (exp_min, exp_max))
         # tuple
-        self.assertTrue(isinstance(self.fmt.tuple, tuple))
+        self.assertTrue(isinstance(self.fmt.tuplefmt, tuple))
         # list
-        self.assertTrue(isinstance(self.fmt.list, list))
+        self.assertTrue(isinstance(self.fmt.listfmt, list))
 
 
 class TestNsfFixNumMethods(utst.TestCase):
