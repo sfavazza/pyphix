@@ -1,6 +1,6 @@
-# pyFiPo, the Python Fixed Point module
+# pyPhix, the Python Fixed Point module
 
-**pyFiPo** is a python package for fixed point number representation.
+**pyPhix** is a python package for fixed point number representation.
 It is intended to support the implementation of digital signal processing systems.
 
 ## Features
@@ -15,8 +15,8 @@ It is intended to support the implementation of digital signal processing system
 
 ## License
 
-### pyFiPo
-pyFiPo is an open source python module released under the terms of
+### pyPhix
+pyPhix is an open source python module released under the terms of
 [Mozilla Public License Version 2.0](LICENSE.txt).
 
 ### NumPy
