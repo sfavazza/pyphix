@@ -2,7 +2,7 @@ import unittest as utst
 import numpy as np
 import importlib as imp
 
-from pyfipo import fix as fi
+from pyphix import fix as fi
 
 ########################################################
 # IMPORTANT: run this script from its parent directory #
@@ -49,15 +49,15 @@ class TestNsfFixNumMethods(utst.TestCase):
         # bin
         exp_bin_vec = ['0b00000000001', '0b01111011101', '0b11000100011',
                        '0b10010000000', '0b00000000000', '0b10000000000']
-        np.testing.assert_array_equal(src_fix_vec.bin, exp_bin_vec)
+        np.testing.assert_array_equal(src_fix_vec.binfmt, exp_bin_vec)
 
         # hex
         exp_hex_vec = ['0x001', '0x3dd', '0x623', '0x480', '0x000', '0x400']
-        np.testing.assert_array_equal(src_fix_vec.hex, exp_hex_vec)
+        np.testing.assert_array_equal(src_fix_vec.hexfmt, exp_hex_vec)
 
         # int
         exp_int_vec = [1, 989, 1571, 1152, 0, 1024]
-        np.testing.assert_array_equal(src_fix_vec.int, exp_int_vec)
+        np.testing.assert_array_equal(src_fix_vec.intfmt, exp_int_vec)
 
     def test_container_methods(self):
         # random vector

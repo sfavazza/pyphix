@@ -36,7 +36,8 @@ class FixFmt:
 
     def __repr__(self):
         return f"""{self.__str__()}
-<{gu.get_class_name(self)} at {hex(id(self))}>"""
+
+  <{gu.get_class_name(self)} at {hex(id(self))}>"""
 
     @property
     def bit_length(self):
@@ -46,6 +47,7 @@ class FixFmt:
     @property
     def maxvalue(self):
         """Return max representable value by current fix format objext."""
+
         toRealCoeff = (1 << self.frac_bits)
         if self.signed:
             return ((1 << (self.bit_length-1))-1)/toRealCoeff
@@ -54,6 +56,7 @@ class FixFmt:
     @property
     def minvalue(self):
         """Return min representable value by current fix format objext."""
+
         if self.signed:
             return -2**(self.bit_length-1)/2**self.frac_bits
         return 0
@@ -61,21 +64,20 @@ class FixFmt:
     @property
     def range(self):
         """Return the range representable by fix format object as tuple (min, max)."""
+
         return (self.minvalue, self.maxvalue)
 
     @property
     def tuplefmt(self):
         """Return object as a tuple."""
-        return (self.signed,
-                self.int_bits,
-                self.frac_bits)
+
+        return (self.signed, self.int_bits, self.frac_bits)
 
     @property
     def listfmt(self):
         """Return object as a list."""
-        return [self.signed,
-                self.int_bits,
-                self.frac_bits]
+
+        return [self.signed, self.int_bits, self.frac_bits]
 
 
 class FixNum:
@@ -94,7 +96,7 @@ class FixNum:
     ``Ceil``      : round to smallest following
 
     ==================
-    Saturation methods
+    Overflow methods
     ==================
     ``Sat``  : saturate
     ``Wrap`` : wrap around -- DEFAULT
@@ -106,8 +108,8 @@ class FixNum:
 
     :type value: np.ndarray(ndim > 0) or float
     :type fmt: FixFmt
-    :type rnd: string
-    :type over: string
+    :type rnd: str
+    :type over: str
     """
 
     def __init__(self,
@@ -142,18 +144,27 @@ class FixNum:
 
     # support methods
     def _valueToLine(self, value):
-        """Turn input value into vector form"""
+        """Turn input value into vector form."""
+
         return np.reshape(value, -1)
 
     def _tmpInt(self):
-        """Geneate integer representation of the fix object"""
+        """Geneate integer representation of the fix object."""
+
         tmp_value = self._valueToLine(self.value) * 2**self.fmt.frac_bits
         return np.array([np.int(x) if x >= 0 else
                          (np.int(x) & self._fix_size_mask) for x in tmp_value])
 
     def _toIndexableArray(self, value):
-        """Turn input value into an indexable array.
-        Return a tuple (value, shape)"""
+        """Turn input value into an indexable array even when a simple number.
+
+        :param value: single number or vector.
+
+        :type value: numpy.ndarray or float
+
+        :return: tuple in the form (value, shape), where value is always indexable.
+        :rtype: tuple[numpy.ndarray, tuple]"""
+
         # turn into array
         value = np.array(value, dtype=np.float64)
         shape = (1, ) if value.shape is () else value.shape
@@ -162,10 +173,16 @@ class FixNum:
 
     # private methods
     def _round(self, value):
-        """Perform specified rounding on input values
+        """Round input using object rounding method.
 
-        value : it must be an indexable vector (even when a single number is provided)
+        :param value: an indexable object.
+
+        :type value: numpy.ndarray
+
+        :return: rounded value.
+        :rtype: numpy.ndarray
         """
+
         if self.rnd == "SymInf":
             value[value > 0] += .5
             value[value < 0] -= .5
@@ -198,7 +215,15 @@ class FixNum:
         return value.astype(int)
 
     def _over(self, value):
-        """Implement specified overflow method on input value"""
+        """Apply current object overflow method on input value.
+
+        :param value: current object value.
+
+        :type value: numpy.ndarray or float
+
+        :return: overflowed value.
+        :rtype: numpy.ndarray or float"""
+
         if self.over == "Sat":
             value = np.maximum(
                 np.minimum(value, self.fmt.maxvalue*self.to_int_coeff),
@@ -221,61 +246,71 @@ class FixNum:
         return value
 
     # public methods
-    def change_fix(self,
-                   new_fmt: FixFmt,
-                   new_rnd: str = None,
-                   new_over: str = None):
+    def change_fix(self, new_fmt, new_rnd=None, new_over=None):
         """Change fix parameters of current object.
         WARNING: this action may lead to information loss due to new format and round/overflow methods.
 
-        :param new_fmt: new format (mandatory)
-        :param new_rnd: new round method, if not specified current is used
-        :param new_over: new saturation method, if not specified current is used
+        :param new_fmt: new format (mandatory).
+        :param new_rnd: new round method, if not specified current is used.
+        :param new_over: new saturation method, if not specified current is used.
+
+        :type new_fmt: FixFmt
+        :type new_rnd: str or None
+        :type new_over: str or None
+
+        :return: new formatted fix-point object.
+        :rtype: FixFmt
         """
+
         return FixNum(self.value, new_fmt,
                       self.rnd if new_rnd is None else new_rnd,
                       self.over if new_over is None else new_over)
 
     @property
-    def bin(self):
+    def binfmt(self):
+        """Represent fix-point object in binary format."""
+
         tmp_bin = np.array([bin(x) for x in self._tmpInt()])
         # correct string representation
         tmp_bin = np.array(['0b' + (self.fmt.bit_length - len(x[2:])) * '0' + x[2:] for x in tmp_bin])
         return np.reshape(tmp_bin, self.shape)
 
     @property
-    def hex(self):
-        tmp_hex = np.array([hex(x) for x in self._valueToLine(self.int)])
+    def hexfmt(self):
+        """Represent fix-point object in hexadecimal format."""
+
+        tmp_hex = np.array([hex(x) for x in self._valueToLine(self.intfmt)])
         # correct string representation
         tmp_hex = np.array(['0x' + (int(np.ceil(self.fmt.bit_length / 4)) - len(x[2:])) * '0' + x[2:]
                             for x in tmp_hex])
         return np.reshape(tmp_hex, self.shape)
 
     @property
-    def int(self):
+    def intfmt(self):
+        """Represent fix-point object in integer format."""
+
         return np.reshape(self._tmpInt(), self.shape)
 
     @property
     def fimath(self):
-        """Return fix math as tuple (round method, overflow mode).
-        """
+        """Return fix math as tuple (round method, overflow mode)."""
+
         return (self.rnd, self.over)
 
     # data model
     # # representation
     def __str__(self):
-        return """
-        """ + str(self.value) + """
-        fmt: """ + str(self.fmt) + """
-        rnd: """ + self.rnd + """ over: """ + self.over
+        return f"""
+{self.value}
+
+  fmt: {self.fmt}
+  rnd: {self.rnd}
+  over: {self.over}"""
 
     def __repr__(self):
-        return """
-        """ + str(self.value) + """
-        fmt: """ + str(self.fmt) + """
-        rnd: """ + self.rnd + """ over: """ + self.over + """
+        return f"""{self.__str__()}
 
-        <nsf_fix.FixNum at """ + hex(id(self)) + '>'
+  <{gu.get_class_name(self)} at {hex(id(self))}>"""
 
     # # container methods
     def __contains__(self, elem):
@@ -314,6 +349,7 @@ class FixNum:
     # ## Addition methods
     def __add__(self, other):
         """x + y --> x.__add__(y)"""
+
         tmpVal = self.value + other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
                         max(self.fmt.int_bits, other.fmt.int_bits)+1,
@@ -324,11 +360,24 @@ class FixNum:
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def add(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        """
-        Addition method.
-        It allows to decide output format.
-        If not indicated, full-precision format will be adopted
-        """
+        """Addition method.
+
+        It allows to decide the output format.
+        If not indicated, full-precision format will be adopted.
+
+        :param other: fix-point object.
+        :param outFmt: optional format operation result can be casted to.
+        :param outRnd: round method adopted on result (default ```SymZero```).
+        :param outOver: overflow method adopted on result (default ```Wrap```).
+
+        :type other: FixNum
+        :type outFmt: FixFmt
+        :type outRnd: str
+        :type outOver: str
+
+        :return: addition result.
+        :rtype: FixNum"""
+
         tmpVal = self.value + other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
                         max(self.fmt.int_bits, other.fmt.int_bits)+1,
@@ -347,11 +396,24 @@ class FixNum:
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def sub(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        """
-        Subtraction method.
+        """Subtraction method.
+
         It allows to decide output format.
-        If not indicated, full-precision format will be adopted
-        """
+        If not indicated, full-precision format will be adopted.
+
+        :param other: fix-point object.
+        :param outFmt: optional format operation result can be casted to.
+        :param outRnd: round method adopted on result (default ```SymZero```).
+        :param outOver: overflow method adopted on result (default ```Wrap```).
+
+        :type other: FixNum
+        :type outFmt: FixFmt
+        :type outRnd: str
+        :type outOver: str
+
+        :return: operation result.
+        :rtype: FixNum"""
+
         tmpVal = self.value - other.value
         tmpFmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
                         max(self.fmt.int_bits, other.fmt.int_bits)+1,
@@ -372,11 +434,24 @@ class FixNum:
         return FixNum(tmpVal, tmpFmt, self.rnd, self.over)
 
     def mult(self, other, outFmt=None, outRnd="SymZero", outOver="Wrap"):
-        """
-        Multiplication method.
+        """Multiplication method.
+
         It allows to decide output format.
-        If not indicated, full-precision format will be adopted
-        """
+        If not indicated, full-precision format will be adopted.
+
+        :param other: fix-point object.
+        :param outFmt: optional format operation result can be casted to.
+        :param outRnd: round method adopted on result (default ```SymZero```).
+        :param outOver: overflow method adopted on result (default ```Wrap```).
+
+        :type other: FixNum
+        :type outFmt: FixFmt
+        :type outRnd: str
+        :type outOver: str
+
+        :return: operation result.
+        :rtype: FixNum"""
+
         tmpVal = self.value * other.value
         tmpSign = max(self.fmt.signed, other.fmt.signed)
         tmpFmt = FixFmt(tmpSign,

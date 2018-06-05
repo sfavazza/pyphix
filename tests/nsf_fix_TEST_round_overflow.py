@@ -2,7 +2,7 @@ import unittest as utst
 import numpy as np
 import importlib as imp
 
-from pyfipo import fix as fi
+from pyphix import fix as fi
 
 ########################################################
 # IMPORTANT: run this script from its parent directory #
