@@ -119,4 +119,5 @@ def check_args_list(args, iterable_type, exp_item_type):
 
 
 def get_class_name(obj):
+    """Get the class name removing all extra characters ('<', '>', etc..)"""
     return re.search("(?<=').*(?=')", str(type(obj))).group().split('.')[-1]
