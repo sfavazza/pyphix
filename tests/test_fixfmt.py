@@ -1,3 +1,5 @@
+"""Test FixFmt features."""
+
 import unittest as utst
 import importlib as imp
 
@@ -8,11 +10,14 @@ imp.reload(fi)
 
 
 class TestFixFmtMethods(utst.TestCase):
+    """Test FixFmt features."""
 
     # define fmt object under test
     fmt = fi.FixFmt(True, 21, 4)
 
     def test_properties(self):
+        """Test FixFmt properties."""
+
         # bit number
         self.assertEqual(self.fmt.bit_length,
                          self.fmt.int_bits + self.fmt.frac_bits + int(self.fmt.signed))
