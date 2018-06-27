@@ -3,17 +3,17 @@
 import unittest as utst
 import importlib as imp
 
-from pyphix import fix as fi
+from pyphix import fix
 
 # reload module to be sure last changes are taken into account
-imp.reload(fi)
+imp.reload(fix)
 
 
 class TestFixFmtMethods(utst.TestCase):
     """Test FixFmt features."""
 
     # define fmt object under test
-    fmt = fi.FixFmt(True, 21, 4)
+    fmt = fix.FixFmt(True, 21, 4)
 
     def test_properties(self):
         """Test FixFmt properties."""

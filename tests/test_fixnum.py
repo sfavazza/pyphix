@@ -7,19 +7,20 @@ import unittest as utst
 import importlib as imp
 
 import numpy as np
+from numpy import bitwise_and as np_and
 
-from pyphix import fix as fi
+from pyphix import fix
 
 # reload module to be sure last changes are taken into account
-imp.reload(fi)
+imp.reload(fix)
 
 
 class TestFixRoundOverMethods(utst.TestCase):
     """Test FixNum features."""
 
     # define formats
-    s_4 = fi.FixFmt(True, 0, 4)
-    u_4 = fi.FixFmt(False, 0, 4)
+    s_4 = fix.FixFmt(True, 0, 4)
+    u_4 = fix.FixFmt(False, 0, 4)
 
     def test_known_signed_round(self):
         """Test round methods on signed values."""
@@ -48,10 +49,10 @@ class TestFixRoundOverMethods(utst.TestCase):
                                            -4, -4, -4, -5, -5, -5]) / to_int_coeff
 
         # apply round methods on test pattern
-        tst_fix_signed = {key: fi.FixNum(tst_pattern_signed,
-                                         self.s_4,
-                                         key,
-                                         'Wrap')
+        tst_fix_signed = {key: fix.FixNum(tst_pattern_signed,
+                                          self.s_4,
+                                          key,
+                                          'Wrap')
                           for key in tst_exp_signed}
         # verify
         for key in tst_exp_signed:
@@ -86,10 +87,10 @@ class TestFixRoundOverMethods(utst.TestCase):
                                              5, 5, 5, 6, 6, 6]) / to_int_coeff
 
         # apply round methods on test pattern
-        tst_fix_unsigned = {key: fi.FixNum(tst_pattern_unsigned,
-                                           self.u_4,
-                                           key,
-                                           'Wrap')
+        tst_fix_unsigned = {key: fix.FixNum(tst_pattern_unsigned,
+                                            self.u_4,
+                                            key,
+                                            'Wrap')
                             for key in tst_exp_unsigned}
         # verify
         for key in tst_exp_unsigned:
@@ -111,10 +112,10 @@ class TestFixRoundOverMethods(utst.TestCase):
                                             -1, .9375])
 
         # apply overflow methods
-        over_fix_signed = {key: fi.FixNum(over_pattern_signed,
-                                          self.s_4,
-                                          'SymZero',
-                                          key)
+        over_fix_signed = {key: fix.FixNum(over_pattern_signed,
+                                           self.s_4,
+                                           'SymZero',
+                                           key)
                            for key in over_exp_signed}
         # verify
         for key in over_exp_signed:
@@ -137,10 +138,10 @@ class TestFixRoundOverMethods(utst.TestCase):
                                               0, .9375])
 
         # apply overflow methods
-        over_fix_unsigned = {key: fi.FixNum(over_pattern_unsigned,
-                                            self.u_4,
-                                            'SymZero',
-                                            key)
+        over_fix_unsigned = {key: fix.FixNum(over_pattern_unsigned,
+                                             self.u_4,
+                                             'SymZero',
+                                             key)
                              for key in over_exp_unsigned}
         # verify
         for key in over_exp_unsigned:
@@ -152,13 +153,13 @@ class TestFixRoundOverMethods(utst.TestCase):
         """Test fimath change."""
 
         # create simple vector
-        s2_5 = fi.FixFmt(True, 2, 5)
-        u1_3 = fi.FixFmt(False, 1, 3)
+        s2_5 = fix.FixFmt(True, 2, 5)
+        u1_3 = fix.FixFmt(False, 1, 3)
 
         input_vec = [-3.56344, 0, 99999, -1.8]
         input_fix_vec = [-3.5625, 0, -1, -1.8125]
         output_fix_vec = [0.375, 0, 1, .125]
-        fix_under_test = fi.FixNum(input_vec, s2_5, 'SymZero')
+        fix_under_test = fix.FixNum(input_vec, s2_5, 'SymZero')
 
         np.testing.assert_array_equal(input_fix_vec, fix_under_test.value)
         np.testing.assert_array_equal(output_fix_vec, fix_under_test.change_fix(u1_3, 'NonSymNeg').value)
@@ -168,14 +169,14 @@ class TestFixNumMethods(utst.TestCase):
     """Test FixNum class general methods."""
 
     # define commons
-    s3_7 = fi.FixFmt(True, 3, 7)
+    s3_7 = fix.FixFmt(True, 3, 7)
 
     def test_public_methods(self):
         """Test FixNum representations."""
 
         # general vectors
         src_vec = [.0078125, 7.724, -3.72455, -7, 0, -8]
-        src_fix_vec = fi.FixNum(src_vec, self.s3_7)
+        src_fix_vec = fix.FixNum(src_vec, self.s3_7)
 
         # bin
         exp_bin_vec = ['0b00000000001', '0b01111011101', '0b11000100011',
@@ -198,17 +199,17 @@ class TestFixNumMethods(utst.TestCase):
                                [0.8359375, 0.8125, 0.8046875, 0.796875]])
 
         # test fix vector
-        test_fix_vec = fi.FixNum(random_vec, self.s3_7)
+        test_fix_vec = fix.FixNum(random_vec, self.s3_7)
 
         # contains
         self.assertTrue(0.8125 in test_fix_vec)  # value
-        self.assertTrue(fi.FixNum(0.8125, self.s3_7) in test_fix_vec)  # fix
+        self.assertTrue(fix.FixNum(0.8125, self.s3_7) in test_fix_vec)  # fix
         self.assertFalse(-70 in test_fix_vec)  # value
-        self.assertFalse(fi.FixNum(-70, self.s3_7) in test_fix_vec)  # fix
+        self.assertFalse(fix.FixNum(-70, self.s3_7) in test_fix_vec)  # fix
 
         # get item
-        self.assertTrue(isinstance(test_fix_vec[0][3], fi.FixNum))
-        self.assertEqual(test_fix_vec[-1][-1], fi.FixNum(.796875, self.s3_7))
+        self.assertTrue(isinstance(test_fix_vec[0][3], fix.FixNum))
+        self.assertEqual(test_fix_vec[-1][-1], fix.FixNum(.796875, self.s3_7))
 
         # set item
         test_fix_vec[0, 1] = 2     # in fmt range
@@ -216,19 +217,81 @@ class TestFixNumMethods(utst.TestCase):
         test_fix_vec[1, 1] = 1000  # out of fmt range
         random_vec[1, 1] = 1000
 
-        self.assertEqual(test_fix_vec[0, 1], fi.FixNum(2, self.s3_7))
-        self.assertEqual(test_fix_vec[1, 1], fi.FixNum(1000, self.s3_7))
-        np.testing.assert_array_equal(test_fix_vec.value, fi.FixNum(random_vec, self.s3_7).value)
+        self.assertEqual(test_fix_vec[0, 1], fix.FixNum(2, self.s3_7))
+        self.assertEqual(test_fix_vec[1, 1], fix.FixNum(1000, self.s3_7))
+        np.testing.assert_array_equal(test_fix_vec.value, fix.FixNum(random_vec, self.s3_7).value)
 
     def test_generator(self):
         """Test FixNum generator feature."""
 
-        pass
+        # generate test data
+        test_data = np.linspace(-16, 15, 100)
+
+        # convert to fix-point object
+        fmt = fix.FixFmt(True, 4, 12)
+        test_fix = fix.FixNum(test_data, fmt, 'Ceil', over='Sat')
+
+        # try to iterate multiple times
+        for cycle in range(0, 5):
+            # try to iterate through test object
+            for idx, fix_element in enumerate(test_fix):
+                self.assertEqual(fix_element, test_fix[idx])
 
     def test_operators(self):
         """Test FixNum supported operations."""
 
-        pass
+        # create formats
+        fmt_a = fix.FixFmt(True, 2, 7)
+        fmt_b = fix.FixFmt(False, 5, 2)
+        frac_diff = abs(fmt_a.frac_bits - fmt_b.frac_bits)
+        int_diff = abs(fmt_a.int_bits - fmt_b.int_bits)
+        sign_mask_a = 2**(fmt_a.bit_length-1)
+
+        # *** create intger version of operators A and B
+        # max/min combination
+        max_a = 2**(fmt_a.bit_length-1)-1  # max positive
+        min_a = 2**(fmt_a.bit_length-1)    # max negative
+        test_a_int = [max_a, max_a, min_a, min_a]
+        max_b = 2**fmt_b.bit_length-1
+        min_b = 0
+        test_b_int = [max_b, min_b, max_b, min_b]
+        # add random data
+        rand_generator = np.random.RandomState(122)       # make tests repeatible
+        # NOTE: min and max are inverted as the negative minimum in 2's complement
+        # is a positive greater than the maximum
+        test_a_int = np.append(test_a_int, rand_generator.randint(0, min_a, 100))
+        test_b_int = np.append(test_b_int, rand_generator.randint(0, max_b, 100))
+
+        # create fixed test objects
+        test_a_fix = fix.FixNum(test_a_int/2**fmt_a.frac_bits, fmt_a, "ConvEven", "Wrap")
+        test_b_fix = fix.FixNum(test_b_int/2**fmt_b.frac_bits, fmt_b, "ConvEven", "Wrap")
+
+        # **
+        # *** ADDITION test
+        # **
+        # create result formats
+        fmt_add_full = fix.FixFmt(fmt_a.signed or fmt_b.signed,
+                                  max(fmt_a.int_bits, fmt_b.int_bits) + 1,
+                                  max(fmt_a.frac_bits, fmt_b.frac_bits))
+        # fractional parts aligned.
+        # NOTE: masks are used to emulate the wrap overflow method
+        mask_add_full = (2**fmt_add_full.bit_length - 1)
+
+        # NOTE: before to perform the additions, the numbers must be properly manipulated so that they have
+        # equal integer and fractional part lenghts:
+        # - sign extend integer part
+        # - shift to align fractional parts
+        int_sum_aligned = [x + ((2**(int_diff+1) - 1) << fmt_a.bit_length)
+                           if (x & sign_mask_a) else x
+                           for x in test_a_int] \
+            + (test_b_int << frac_diff)  # b is always positive
+
+        # create expected results
+        exp_add_full_int = np_and(int_sum_aligned, mask_add_full)  # / 2**fmt_add_full.frac_bits
+
+        # verify (compare integer version for simplicity)
+        np.testing.assert_array_equal(test_a_fix.add(test_b_fix).intfmt, exp_add_full_int,
+                                      err_msg='[FULL] Wrong addition result')
 
     def test_logic_operations(self):
         """Test FixNum logic operations."""

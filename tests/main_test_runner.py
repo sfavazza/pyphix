@@ -7,7 +7,7 @@ import importlib as imp
 
 # add module under test (mut) to sys.path for test purposes only
 ORIG_SYS_PATH = sys.path.copy()
-sys.path.insert(0, os.path.abspath('../pyphix'))
+sys.path.insert(0, os.path.abspath('../'))
 
 import test_fixfmt as t_fmt     # noqa
 import test_fixnum as t_num     # noqa
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
         res_fail = 'FAIL'
         res_success = 'SUCCESS'
-        print(f"Final test result: {res_success if TEST_RESULT else res_success}")
+        print(f"Final test result: {res_success if TEST_RESULT else res_fail}")
 
     finally:
         # clean the namespace
