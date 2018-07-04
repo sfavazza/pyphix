@@ -231,36 +231,32 @@ class TestFixNumMethods(utst.TestCase):
         fmt = fix.FixFmt(True, 4, 12)
         test_fix = fix.FixNum(test_data, fmt, 'Ceil', over='Sat')
 
-        # try to iterate multiple times
-        for cycle in range(0, 5):
-            # try to iterate through test object
-            for idx, fix_element in enumerate(test_fix):
-                self.assertEqual(fix_element, test_fix[idx])
+        # try to iterate through test object
+        for idx, fix_element in enumerate(test_fix):
+            self.assertEqual(fix_element, test_fix[idx])
 
-    def test_operators(self):
+    @staticmethod
+    def test_addition():
         """Test FixNum supported operations."""
 
         # create formats
         fmt_a = fix.FixFmt(True, 2, 7)
         fmt_b = fix.FixFmt(False, 5, 2)
-        frac_diff = abs(fmt_a.frac_bits - fmt_b.frac_bits)
-        int_diff = abs(fmt_a.int_bits - fmt_b.int_bits)
-        sign_mask_a = 2**(fmt_a.bit_length-1)
 
         # *** create intger version of operators A and B
         # max/min combination
-        max_a = 2**(fmt_a.bit_length-1)-1  # max positive
-        min_a = 2**(fmt_a.bit_length-1)    # max negative
-        test_a_int = [max_a, max_a, min_a, min_a]
-        max_b = 2**fmt_b.bit_length-1
-        min_b = 0
-        test_b_int = [max_b, min_b, max_b, min_b]
+        test_a_int = [fmt_a.maxvalue('int'), fmt_a.maxvalue('int'),
+                      fmt_a.minvalue('int'), fmt_a.minvalue('int')]
+        test_b_int = [fmt_b.maxvalue('int'), fmt_b.minvalue('int'),
+                      fmt_b.maxvalue('int'), fmt_b.minvalue('int')]
         # add random data
         rand_generator = np.random.RandomState(122)       # make tests repeatible
         # NOTE: min and max are inverted as the negative minimum in 2's complement
         # is a positive greater than the maximum
-        test_a_int = np.append(test_a_int, rand_generator.randint(0, min_a, 100))
-        test_b_int = np.append(test_b_int, rand_generator.randint(0, max_b, 100))
+        test_a_int = np.append(test_a_int, rand_generator.randint(fmt_a.minvalue('int'),
+                                                                  fmt_a.maxvalue('int'), 100))
+        test_b_int = np.append(test_b_int, rand_generator.randint(fmt_b.minvalue('int'),
+                                                                  fmt_b.maxvalue('int'), 100))
 
         # create fixed test objects
         test_a_fix = fix.FixNum(test_a_int/2**fmt_a.frac_bits, fmt_a, "ConvEven", "Wrap")
@@ -273,25 +269,36 @@ class TestFixNumMethods(utst.TestCase):
         fmt_add_full = fix.FixFmt(fmt_a.signed or fmt_b.signed,
                                   max(fmt_a.int_bits, fmt_b.int_bits) + 1,
                                   max(fmt_a.frac_bits, fmt_b.frac_bits))
-        # fractional parts aligned.
-        # NOTE: masks are used to emulate the wrap overflow method
-        mask_add_full = (2**fmt_add_full.bit_length - 1)
+        fmt_add_small = fix.FixFmt(False, fmt_add_full.int_bits - 1, fmt_add_full.frac_bits - 1)
+        fmt_add_big = fix.FixFmt(True, fmt_add_full.int_bits + 1, fmt_add_full.frac_bits + 1)
 
-        # NOTE: before to perform the additions, the numbers must be properly manipulated so that they have
-        # equal integer and fractional part lenghts:
-        # - sign extend integer part
-        # - shift to align fractional parts
-        int_sum_aligned = [x + ((2**(int_diff+1) - 1) << fmt_a.bit_length)
-                           if (x & sign_mask_a) else x
-                           for x in test_a_int] \
-            + (test_b_int << frac_diff)  # b is always positive
+        # NOTE: before to perform the additions, the numbers must have the same fractional part length
+        # the sign extension on the integer part comes for free, as in python 3 the integers uses an
+        # 'infinite' numbers of bits (source: https://wiki.python.org/moin/BitwiseOperators)
+        int_sum_aligned = test_a_int \
+            + (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits))  # b is always >= 0
 
-        # create expected results
-        exp_add_full_int = np_and(int_sum_aligned, mask_add_full)  # / 2**fmt_add_full.frac_bits
+        # *** create expected results
+        # * full precision (use mask to use wrap overflow method and remove the minus sign)
+        exp_add_full_int = np_and(int_sum_aligned, fmt_add_full.mask)
+        # * small format (perform saturation, no mask needed as the final format is unsigned)
+        exp_add_small_int = int_sum_aligned >> 1
+        exp_add_small_int[exp_add_small_int >= fmt_add_small.maxvalue('int')] = fmt_add_small.maxvalue('int')
+        exp_add_small_int[exp_add_small_int <= fmt_add_small.minvalue('int')] = fmt_add_small.minvalue('int')
+        # * big format (no saturation needed)
+        exp_add_big_int = np_and(int_sum_aligned << 1, fmt_add_big.mask)
 
         # verify (compare integer version for simplicity)
         np.testing.assert_array_equal(test_a_fix.add(test_b_fix).intfmt, exp_add_full_int,
                                       err_msg='[FULL] Wrong addition result')
+        np.testing.assert_array_equal(test_a_fix.add(test_b_fix, out_fmt=fmt_add_small,
+                                                     out_rnd="NonSymNeg", out_over="Sat").intfmt,
+                                      exp_add_small_int,
+                                      err_msg='[SMALL] Wrong addition result')
+        np.testing.assert_array_equal(test_a_fix.add(test_b_fix, out_fmt=fmt_add_big,
+                                                     out_rnd="NonSymNeg", out_over="Sat").intfmt,
+                                      exp_add_big_int,
+                                      err_msg='[BIG] Wrong addition result')
 
     def test_logic_operations(self):
         """Test FixNum logic operations."""
