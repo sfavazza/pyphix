@@ -66,17 +66,37 @@ def check_kwargs_list(kwargs, arg_name, iterable_type, exp_item_type, default_va
         return default_value
 
 
-def check_args(args, exp_type):
+def check_enum(argument, exp_enum):
     """Check the legality of an input argument and raise ValueError if wrong.
 
-    :param args: argument value to check.
+    This method is specific for enum as it try to parse the input to the target expected enum.
+
+    :param argument: string or enum input to check.
+    :param exp_enum: expected enum class.
+
+    :type argument: any
+    :type exp_enum: enum
+
+    :return: *argument* if legal
+    :rtype: enum"""
+
+    try:
+        return exp_enum(argument)
+    except ValueError:
+        raise ValueError(f"Wrong argument type. Given argument '{argument}' cannot be casted to '{exp_enum}'")
+
+
+def check_args(argument, exp_type):
+    """Check the legality of an input argument and raise ValueError if wrong.
+
+    :param argument: argument value to check.
     :param exp_type: type or list of types accepted for the checked argument.
 
-    :type args: any
+    :type argument: any
     :type exp_type: any or list of any type
 
-    :return: *args* if legal.
-    :rtype: type(args)
+    :return: *argument* if legal.
+    :rtype: type(argument)
     """
 
     # create list of types
@@ -87,35 +107,35 @@ def check_args(args, exp_type):
         type_list = exp_type
 
     # perform check
-    if isinstance(args, tuple(type_list)):
-        return args
+    if isinstance(argument, tuple(type_list)):
+        return argument
     else:
-        raise ValueError(f"Wrong argument type. Expected '{exp_type}' found '{type(args)}'")
+        raise ValueError(f"Wrong argument type. Expected '{exp_type}' found '{type(argument)}'")
 
 
-def check_args_list(args, iterable_type, exp_item_type):
+def check_args_list(argument, iterable_type, exp_item_type):
     """Check the legality of the type of elements inside the iterable argument raise ValueError if wrong.
 
-    :param args: argument to be checked, **must** be an iterable.
+    :param argument: argument to be checked, **must** be an iterable.
     :param iterable_type: type of the inspected argument.
     :param exp_item_type: (list of) expected type(s) of the argument items.
 
-    :type args: iterable
+    :type argument: iterable
     :type iterable_type: iterable
     :type exp_item_type: any or list of any type
 
-    :return: *args* if it is legal.
-    :rtype: type(args)
+    :return: *argument* if it is legal.
+    :rtype: type(argument)
     """
 
     # raise an exception if wrong argument type
-    check_args(args, iterable_type)
+    check_args(argument, iterable_type)
 
     # check argument items
-    for item in args:
+    for item in argument:
         check_args(item, exp_item_type)
 
-    return args
+    return argument
 
 
 def get_class_name(obj):

@@ -12,6 +12,14 @@ from numpy import bitwise_not as np_not
 from . import generalutil as gu
 
 
+class EFormat(Enum):
+    """Enum class to express number base expression"""
+    HEX = 'hex'
+    INT = 'int'
+    BIN = 'bin'
+    FLOAT = 'float'
+
+
 class ERoundMethod(Enum):
     """Enum class for round methods."""
     SYM_INF = 'SymInf'
@@ -60,32 +68,81 @@ class FixFmt:
   <{gu.get_class_name(self)} at {hex(id(self))}>"""
 
     @property
+    def mask(self):
+        """Return mask to limit number representation (bit_length*ones).
+
+        Ex:
+        >>> from pyphix import fix
+        >>> fmt = fix.FixFmt(True, 2, 3)
+        >>> bin(fmt.mask)
+            '0b111111'
+
+        >>> fmt = fix.FixFmt(False, 1, 12)
+        >>> bin(fmt.mask)
+            '0b1111111111111"""
+
+        return 2**self.bit_length-1
+
+    @property
     def bit_length(self):
         """Return the number of bits required to represent a number with current fix format."""
         return int(self.signed) + self.int_bits + self.frac_bits
 
-    @property
-    def maxvalue(self):
-        """Return max representable value by current fix format objext."""
+    def _minmaxvalueformatter(self, value, fmt):
+        """Return value in desired expressed format.
 
-        real2int = (1 << self.frac_bits)
-        if self.signed:
-            return ((1 << (self.bit_length-1))-1)/real2int
-        return ((1 << (self.bit_length))-1)/real2int
+        :param value: value to format.
+        :param fmt: desired format
 
-    @property
-    def minvalue(self):
+        :type value: int
+        :type fmt: EFormat
+
+        :return: formatted input value.
+        :rtype: float or int or str"""
+
+        if fmt is EFormat.BIN:
+            return _bin2fixstring(value & self.mask, self.bit_length)
+
+        if fmt is EFormat.HEX:
+            return hex(value & self.mask)
+
+        if fmt is EFormat.FLOAT:
+            return value/2**self.frac_bits
+
+        return value
+
+    def maxvalue(self, fmt='float'):
+        """Return max representable value by current fix format objext.
+
+        :param fmt: format the value is presented, either hex, int, bin, float.
+
+        :type fmt: EFormat or str
+
+        :return: max representable value.
+        :rtype: float or int or str"""
+
+        # ensure the given fmt is correct
+        _fmt = gu.check_enum(fmt, EFormat)
+        maxvalue_int = (1 << (self.bit_length-1))-1 if self.signed else \
+                       (1 << (self.bit_length))-1
+
+        return self._minmaxvalueformatter(maxvalue_int, _fmt)
+
+    def minvalue(self, fmt='float'):
         """Return min representable value by current fix format objext."""
 
-        if self.signed:
-            return -2**(self.bit_length-1)/2**self.frac_bits
-        return 0
+        # ensure the given fmt is correct
+        _fmt = gu.check_enum(fmt, EFormat)
+        minvalue_int = -2**(self.bit_length-1) if self.signed else 0
+        # if self.signed:
+        #     return -2**(self.bit_length-1)/2**self.frac_bits
+        return self._minmaxvalueformatter(minvalue_int, _fmt)
 
     @property
-    def range(self):
+    def fixrange(self):
         """Return the range representable by fix format object as tuple (min, max)."""
 
-        return (self.minvalue, self.maxvalue)
+        return (self.minvalue(), self.maxvalue())
 
     @property
     def tuplefmt(self):
@@ -213,30 +270,30 @@ class FixNum:
         :rtype: numpy.ndarray
         """
 
-        if self.rnd == "SymInf":
+        if self.rnd is "SymInf":
             value[value > 0] += .5
             value[value < 0] -= .5
-        elif self.rnd == "SymZero":
+        elif self.rnd is "SymZero":
             value[value > 0] += .4
             value[value < 0] -= .4
-        elif self.rnd == "NonSymPos":
+        elif self.rnd is "NonSymPos":
             value[value > 0] += .5
             value[value < 0] -= .4
-        elif self.rnd == "NonSymNeg":
+        elif self.rnd is "NonSymNeg":
             value[value > 0] += .4
             value[value < 0] -= .5
         elif self.rnd in ["ConvEven", "ConvOdd"]:
             even_sel, odd_sel = value.astype(int) % 2 == 0, value.astype(int) % 2 != 0
             # even
-            value[np.logical_and(even_sel, value > 0)] += .4 if self.rnd == "ConvEven" else .5
-            value[np.logical_and(even_sel, value < 0)] -= .4 if self.rnd == "ConvEven" else .5
+            value[np.logical_and(even_sel, value > 0)] += .4 if self.rnd is "ConvEven" else .5
+            value[np.logical_and(even_sel, value < 0)] -= .4 if self.rnd is "ConvEven" else .5
             # odd
-            value[np.logical_and(odd_sel, value > 0)] += .5 if self.rnd == "ConvEven" else .4
-            value[np.logical_and(odd_sel, value < 0)] -= .5 if self.rnd == "ConvEven" else .4
-        elif self.rnd == "Floor":
+            value[np.logical_and(odd_sel, value > 0)] += .5 if self.rnd is "ConvEven" else .4
+            value[np.logical_and(odd_sel, value < 0)] -= .5 if self.rnd is "ConvEven" else .4
+        elif self.rnd is "Floor":
             # round to the previous largest
             value = np.floor(value)
-        elif self.rnd == "Ceil":
+        elif self.rnd is "Ceil":
             # round to the next smallest
             value = np.ceil(value)
         else:
@@ -254,11 +311,11 @@ class FixNum:
         :return: overflowed value.
         :rtype: numpy.ndarray or float"""
 
-        if self.over == "Sat":
+        if self.over is "Sat":
             value = np.maximum(
-                np.minimum(value, self.fmt.maxvalue*self.to_int_coeff),
-                self.fmt.minvalue*self.to_int_coeff)
-        elif self.over == "Wrap":
+                np.minimum(value, self.fmt.maxvalue(fmt=EFormat.INT)),
+                self.fmt.minvalue(fmt=EFormat.INT))
+        elif self.over is "Wrap":
             # selection masks
             high_bit_mask = (1 << (self.fmt.bit_length-1))
             # pos / neg selector
@@ -301,9 +358,8 @@ class FixNum:
     def binfmt(self):
         """Represent fix-point object in binary format."""
 
-        tmp_bin = np.array([bin(x) for x in self._tmp_int()])
         # correct string representation
-        tmp_bin = np.array(['0b' + (self.fmt.bit_length - len(x[2:])) * '0' + x[2:] for x in tmp_bin])
+        tmp_bin = np.array([_bin2fixstring(x, self.fmt.bit_length) for x in self._tmp_int()])
         return np.reshape(tmp_bin, self.shape)
 
     @property
@@ -513,3 +569,12 @@ class FixNum:
 
     def __ge__(self, other):
         return self.value >= other
+
+
+# private methods
+def _bin2fixstring(value, out_length):
+    """Convert a number to bin with leading zeros."""
+
+    value_bin_no_prefix = bin(value)[2:]
+
+    return '0b' + (out_length - len(value_bin_no_prefix)) * '0' + value_bin_no_prefix
