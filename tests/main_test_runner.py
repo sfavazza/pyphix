@@ -49,7 +49,7 @@ def test_suite_fixnum():
     for test_name in ['test_public_methods',
                       'test_container_methods',
                       'test_generator',
-                      'test_addition',
+                      'test_addsub',
                       'test_logic_operations']:
         test_suite.addTest(t_num.TestFixNumMethods(test_name))
 

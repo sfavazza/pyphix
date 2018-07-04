@@ -236,8 +236,8 @@ class TestFixNumMethods(utst.TestCase):
             self.assertEqual(fix_element, test_fix[idx])
 
     @staticmethod
-    def test_addition():
-        """Test FixNum supported operations."""
+    def test_addsub():
+        """Test FixNum addition and subtraction operations."""
 
         # create formats
         fmt_a = fix.FixFmt(True, 2, 7)
@@ -266,39 +266,52 @@ class TestFixNumMethods(utst.TestCase):
         # *** ADDITION test
         # **
         # create result formats
-        fmt_add_full = fix.FixFmt(fmt_a.signed or fmt_b.signed,
-                                  max(fmt_a.int_bits, fmt_b.int_bits) + 1,
-                                  max(fmt_a.frac_bits, fmt_b.frac_bits))
-        fmt_add_small = fix.FixFmt(False, fmt_add_full.int_bits - 1, fmt_add_full.frac_bits - 1)
-        fmt_add_big = fix.FixFmt(True, fmt_add_full.int_bits + 1, fmt_add_full.frac_bits + 1)
+        fmt_addsub_full = fix.FixFmt(fmt_a.signed or fmt_b.signed,
+                                     max(fmt_a.int_bits, fmt_b.int_bits) + 1,
+                                     max(fmt_a.frac_bits, fmt_b.frac_bits))
+        fmt_addsub_small = fix.FixFmt(False, fmt_addsub_full.int_bits - 1, fmt_addsub_full.frac_bits - 1)
+        fmt_addsub_big = fix.FixFmt(True, fmt_addsub_full.int_bits + 1, fmt_addsub_full.frac_bits + 1)
 
         # NOTE: before to perform the additions, the numbers must have the same fractional part length
         # the sign extension on the integer part comes for free, as in python 3 the integers uses an
         # 'infinite' numbers of bits (source: https://wiki.python.org/moin/BitwiseOperators)
-        int_sum_aligned = test_a_int \
-            + (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits))  # b is always >= 0
+        # create integer expected results for addition and subtraction
+        int_addsub_aligned = [
+            test_a_int + (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits)),  # b is always >= 0
+            test_a_int - (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits))]
 
         # *** create expected results
-        # * full precision (use mask to use wrap overflow method and remove the minus sign)
-        exp_add_full_int = np_and(int_sum_aligned, fmt_add_full.mask)
-        # * small format (perform saturation, no mask needed as the final format is unsigned)
-        exp_add_small_int = int_sum_aligned >> 1
-        exp_add_small_int[exp_add_small_int >= fmt_add_small.maxvalue('int')] = fmt_add_small.maxvalue('int')
-        exp_add_small_int[exp_add_small_int <= fmt_add_small.minvalue('int')] = fmt_add_small.minvalue('int')
-        # * big format (no saturation needed)
-        exp_add_big_int = np_and(int_sum_aligned << 1, fmt_add_big.mask)
+        # prepare function list
+        func_addsub = [test_a_fix.add, test_a_fix.sub]
+        for idx, exp_int in enumerate(int_addsub_aligned):
+            # * full precision (use mask to use wrap overflow method and remove the minus sign)
+            exp_addsub_full_int = np_and(int_addsub_aligned[idx], fmt_addsub_full.mask)
 
-        # verify (compare integer version for simplicity)
-        np.testing.assert_array_equal(test_a_fix.add(test_b_fix).intfmt, exp_add_full_int,
-                                      err_msg='[FULL] Wrong addition result')
-        np.testing.assert_array_equal(test_a_fix.add(test_b_fix, out_fmt=fmt_add_small,
-                                                     out_rnd="NonSymNeg", out_over="Sat").intfmt,
-                                      exp_add_small_int,
-                                      err_msg='[SMALL] Wrong addition result')
-        np.testing.assert_array_equal(test_a_fix.add(test_b_fix, out_fmt=fmt_add_big,
-                                                     out_rnd="NonSymNeg", out_over="Sat").intfmt,
-                                      exp_add_big_int,
-                                      err_msg='[BIG] Wrong addition result')
+            # * small format (perform saturation, no mask needed as the final format is unsigned)
+            exp_addsub_small_int = int_addsub_aligned[idx] >> 1
+            exp_addsub_small_int[exp_addsub_small_int >= fmt_addsub_small.maxvalue('int')] = \
+                fmt_addsub_small.maxvalue('int')
+            exp_addsub_small_int[exp_addsub_small_int <= fmt_addsub_small.minvalue('int')] = \
+                fmt_addsub_small.minvalue('int')
+            # * big format (no saturation needed)
+            exp_addsub_big_int = np_and(int_addsub_aligned[idx] << 1, fmt_addsub_big.mask)
+
+            # verify (compare integer version for simplicity)
+            np.testing.assert_array_equal(func_addsub[idx](test_b_fix).intfmt, exp_addsub_full_int,
+                                          err_msg='[FULL] Wrong addition result')
+            np.testing.assert_array_equal(func_addsub[idx](test_b_fix, out_fmt=fmt_addsub_small,
+                                                           out_rnd="NonSymNeg", out_over="Sat").intfmt,
+                                          exp_addsub_small_int,
+                                          err_msg='[SMALL] Wrong addition result')
+            np.testing.assert_array_equal(func_addsub[idx](test_b_fix, out_fmt=fmt_addsub_big,
+                                                           out_rnd="NonSymNeg", out_over="Sat").intfmt,
+                                          exp_addsub_big_int,
+                                          err_msg='[BIG] Wrong addition result')
+
+    def test_mult(self):
+        """Test FixNum multiplication operation."""
+
+        pass
 
     def test_logic_operations(self):
         """Test FixNum logic operations."""
