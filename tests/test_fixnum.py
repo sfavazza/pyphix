@@ -171,6 +171,29 @@ class TestFixNumMethods(utst.TestCase):
     # define commons
     s3_7 = fix.FixFmt(True, 3, 7)
 
+    # create formats
+    fmt_a = fix.FixFmt(True, 2, 7)
+    fmt_b = fix.FixFmt(False, 5, 2)
+
+    # *** create intger version of operators A and B
+    # max/min combination
+    test_a_int = [fmt_a.maxvalue('int'), fmt_a.maxvalue('int'),
+                  fmt_a.minvalue('int'), fmt_a.minvalue('int')]
+    test_b_int = [fmt_b.maxvalue('int'), fmt_b.minvalue('int'),
+                  fmt_b.maxvalue('int'), fmt_b.minvalue('int')]
+    # add random data
+    rand_generator = np.random.RandomState(122)       # make tests repeatible
+    # NOTE: min and max are inverted as the negative minimum in 2's complement
+    # is a positive greater than the maximum
+    test_a_int = np.append(test_a_int, rand_generator.randint(fmt_a.minvalue('int'),
+                                                              fmt_a.maxvalue('int'), 100))
+    test_b_int = np.append(test_b_int, rand_generator.randint(fmt_b.minvalue('int'),
+                                                              fmt_b.maxvalue('int'), 100))
+
+    # create fixed test objects
+    test_a_fix = fix.FixNum(test_a_int/2**fmt_a.frac_bits, fmt_a, "ConvEven", "Wrap")
+    test_b_fix = fix.FixNum(test_b_int/2**fmt_b.frac_bits, fmt_b, "ConvEven", "Wrap")
+
     def test_public_methods(self):
         """Test FixNum representations."""
 
@@ -235,40 +258,13 @@ class TestFixNumMethods(utst.TestCase):
         for idx, fix_element in enumerate(test_fix):
             self.assertEqual(fix_element, test_fix[idx])
 
-    @staticmethod
-    def test_addsub():
+    def test_addsub(self):
         """Test FixNum addition and subtraction operations."""
 
-        # create formats
-        fmt_a = fix.FixFmt(True, 2, 7)
-        fmt_b = fix.FixFmt(False, 5, 2)
-
-        # *** create intger version of operators A and B
-        # max/min combination
-        test_a_int = [fmt_a.maxvalue('int'), fmt_a.maxvalue('int'),
-                      fmt_a.minvalue('int'), fmt_a.minvalue('int')]
-        test_b_int = [fmt_b.maxvalue('int'), fmt_b.minvalue('int'),
-                      fmt_b.maxvalue('int'), fmt_b.minvalue('int')]
-        # add random data
-        rand_generator = np.random.RandomState(122)       # make tests repeatible
-        # NOTE: min and max are inverted as the negative minimum in 2's complement
-        # is a positive greater than the maximum
-        test_a_int = np.append(test_a_int, rand_generator.randint(fmt_a.minvalue('int'),
-                                                                  fmt_a.maxvalue('int'), 100))
-        test_b_int = np.append(test_b_int, rand_generator.randint(fmt_b.minvalue('int'),
-                                                                  fmt_b.maxvalue('int'), 100))
-
-        # create fixed test objects
-        test_a_fix = fix.FixNum(test_a_int/2**fmt_a.frac_bits, fmt_a, "ConvEven", "Wrap")
-        test_b_fix = fix.FixNum(test_b_int/2**fmt_b.frac_bits, fmt_b, "ConvEven", "Wrap")
-
-        # **
-        # *** ADDITION test
-        # **
         # create result formats
-        fmt_addsub_full = fix.FixFmt(fmt_a.signed or fmt_b.signed,
-                                     max(fmt_a.int_bits, fmt_b.int_bits) + 1,
-                                     max(fmt_a.frac_bits, fmt_b.frac_bits))
+        fmt_addsub_full = fix.FixFmt(self.fmt_a.signed or self.fmt_b.signed,
+                                     max(self.fmt_a.int_bits, self.fmt_b.int_bits) + 1,
+                                     max(self.fmt_a.frac_bits, self.fmt_b.frac_bits))
         fmt_addsub_small = fix.FixFmt(False, fmt_addsub_full.int_bits - 1, fmt_addsub_full.frac_bits - 1)
         fmt_addsub_big = fix.FixFmt(True, fmt_addsub_full.int_bits + 1, fmt_addsub_full.frac_bits + 1)
 
@@ -277,12 +273,14 @@ class TestFixNumMethods(utst.TestCase):
         # 'infinite' numbers of bits (source: https://wiki.python.org/moin/BitwiseOperators)
         # create integer expected results for addition and subtraction
         int_addsub_aligned = [
-            test_a_int + (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits)),  # b is always >= 0
-            test_a_int - (test_b_int << abs(fmt_a.frac_bits - fmt_b.frac_bits))]
+            self.test_a_int
+            + (self.test_b_int << abs(self.fmt_a.frac_bits - self.fmt_b.frac_bits)),  # b is always >= 0
+            self.test_a_int
+            - (self.test_b_int << abs(self.fmt_a.frac_bits - self.fmt_b.frac_bits))]
 
         # *** create expected results
         # prepare function list
-        func_addsub = [test_a_fix.add, test_a_fix.sub]
+        func_addsub = [self.test_a_fix.add, self.test_a_fix.sub]
         for idx, exp_int in enumerate(int_addsub_aligned):
             # * full precision (use mask to use wrap overflow method and remove the minus sign)
             exp_addsub_full_int = np_and(int_addsub_aligned[idx], fmt_addsub_full.mask)
@@ -297,13 +295,13 @@ class TestFixNumMethods(utst.TestCase):
             exp_addsub_big_int = np_and(int_addsub_aligned[idx] << 1, fmt_addsub_big.mask)
 
             # verify (compare integer version for simplicity)
-            np.testing.assert_array_equal(func_addsub[idx](test_b_fix).intfmt, exp_addsub_full_int,
+            np.testing.assert_array_equal(func_addsub[idx](self.test_b_fix).intfmt, exp_addsub_full_int,
                                           err_msg='[FULL] Wrong addition result')
-            np.testing.assert_array_equal(func_addsub[idx](test_b_fix, out_fmt=fmt_addsub_small,
+            np.testing.assert_array_equal(func_addsub[idx](self.test_b_fix, out_fmt=fmt_addsub_small,
                                                            out_rnd="NonSymNeg", out_over="Sat").intfmt,
                                           exp_addsub_small_int,
                                           err_msg='[SMALL] Wrong addition result')
-            np.testing.assert_array_equal(func_addsub[idx](test_b_fix, out_fmt=fmt_addsub_big,
+            np.testing.assert_array_equal(func_addsub[idx](self.test_b_fix, out_fmt=fmt_addsub_big,
                                                            out_rnd="NonSymNeg", out_over="Sat").intfmt,
                                           exp_addsub_big_int,
                                           err_msg='[BIG] Wrong addition result')
@@ -311,7 +309,14 @@ class TestFixNumMethods(utst.TestCase):
     def test_mult(self):
         """Test FixNum multiplication operation."""
 
-        pass
+        # create result formats
+        fmt_mult_full = fix.FixFmt(self.fmt_a.signed or self.fmt_b.signed,
+                                   self.fmt_a.int_bits + self.fmt_b.int_bits,
+                                   self.fmt_a.frac_bits + self.fmt_b.frac_bits)
+        fmt_mult_small = fix.FixFmt(False, fmt_mult_full.int_bits - 2, fmt_mult_full.frac_bits - 3)
+        fmt_mult_big = fix.FixFmt(True, fmt_mult_full.int_bits + 1, fmt_mult_full.frac_bits + 1)
+
+        
 
     def test_logic_operations(self):
         """Test FixNum logic operations."""
