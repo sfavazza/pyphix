@@ -50,6 +50,7 @@ def test_suite_fixnum():
                       'test_container_methods',
                       'test_generator',
                       'test_addsub',
+                      'test_mult',
                       'test_logic_operations']:
         test_suite.addTest(t_num.TestFixNumMethods(test_name))
 
@@ -83,9 +84,7 @@ if __name__ == '__main__':
         if ENABLE_TEST_ALL or ENABLE_TEST_FIXNUM:
             TEST_RESULT &= TEST_RUNNER.run(test_suite_fixnum()).wasSuccessful()
 
-        res_fail = 'FAIL'
-        res_success = 'SUCCESS'
-        print(f"Final test result: {res_success if TEST_RESULT else res_fail}")
+        print(f"Final test result: {'SUCCESS' if TEST_RESULT else 'FAIL'}")
 
     finally:
         # clean the namespace

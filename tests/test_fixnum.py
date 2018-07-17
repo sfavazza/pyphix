@@ -23,7 +23,7 @@ class TestFixRoundOverMethods(utst.TestCase):
     u_4 = fix.FixFmt(False, 0, 4)
 
     def test_known_signed_round(self):
-        """Test round methods on signed values."""
+        """DESCR: Test round methods on signed values."""
 
         # create test vector
         to_int_coeff = 2**self.s_4.frac_bits
@@ -60,7 +60,7 @@ class TestFixRoundOverMethods(utst.TestCase):
                                           tst_fix_signed[key].value)
 
     def test_known_unsigned_round(self):
-        """Test round methods on unsigned values."""
+        """DESCR: Test round methods on unsigned values."""
 
         # create test vector
         to_int_coeff = 2**self.s_4.frac_bits
@@ -98,7 +98,7 @@ class TestFixRoundOverMethods(utst.TestCase):
                                           tst_fix_unsigned[key].value)
 
     def test_known_signed_overflow(self):
-        """Test overflow methods on signed values."""
+        """DESCR: Test overflow methods on signed values."""
 
         # saturation overflow
         # max 0.9375 min -1
@@ -123,7 +123,7 @@ class TestFixRoundOverMethods(utst.TestCase):
                                           over_fix_signed[key].value)
 
     def test_known_unsigned_overflow(self):
-        """Test overflow methods on unsigned values."""
+        """DESCR: Test overflow methods on unsigned values."""
 
         # saturation overflow
         # max 0.9375 min 0
@@ -150,7 +150,7 @@ class TestFixRoundOverMethods(utst.TestCase):
 
     @staticmethod
     def test_change_fix():
-        """Test fimath change."""
+        """DESCR: Test fimath change."""
 
         # create simple vector
         s2_5 = fix.FixFmt(True, 2, 5)
@@ -195,7 +195,7 @@ class TestFixNumMethods(utst.TestCase):
     test_b_fix = fix.FixNum(test_b_int/2**fmt_b.frac_bits, fmt_b, "ConvEven", "Wrap")
 
     def test_public_methods(self):
-        """Test FixNum representations."""
+        """DESCR: Test FixNum representations."""
 
         # general vectors
         src_vec = [.0078125, 7.724, -3.72455, -7, 0, -8]
@@ -215,7 +215,7 @@ class TestFixNumMethods(utst.TestCase):
         np.testing.assert_array_equal(src_fix_vec.intfmt, exp_int_vec)
 
     def test_container_methods(self):
-        """Test FixNum container behavior."""
+        """DESCR: Test FixNum container behavior."""
 
         # random vector
         random_vec = np.array([[0.3046875, 0.8515625, 0.4609375, 0.0703125],
@@ -245,7 +245,7 @@ class TestFixNumMethods(utst.TestCase):
         np.testing.assert_array_equal(test_fix_vec.value, fix.FixNum(random_vec, self.s3_7).value)
 
     def test_generator(self):
-        """Test FixNum generator feature."""
+        """DESCR: Test FixNum generator feature."""
 
         # generate test data
         test_data = np.linspace(-16, 15, 100)
@@ -259,7 +259,7 @@ class TestFixNumMethods(utst.TestCase):
             self.assertEqual(fix_element, test_fix[idx])
 
     def test_addsub(self):
-        """Test FixNum addition and subtraction operations."""
+        """DESCR: Test FixNum addition and subtraction operations."""
 
         # create result formats
         fmt_addsub_full = fix.FixFmt(self.fmt_a.signed or self.fmt_b.signed,
@@ -306,8 +306,11 @@ class TestFixNumMethods(utst.TestCase):
                                           exp_addsub_big_int,
                                           err_msg='[BIG] Wrong addition result')
 
+            # verify full format is as expected
+            self.assertEqual(func_addsub[idx](self.test_b_fix).fmt.tuplefmt, fmt_addsub_full.tuplefmt)
+
     def test_mult(self):
-        """Test FixNum multiplication operation."""
+        """DESCR: Test FixNum multiplication operation."""
 
         # create result formats
         fmt_mult_full = fix.FixFmt(self.fmt_a.signed or self.fmt_b.signed,
@@ -316,10 +319,35 @@ class TestFixNumMethods(utst.TestCase):
         fmt_mult_small = fix.FixFmt(False, fmt_mult_full.int_bits - 2, fmt_mult_full.frac_bits - 3)
         fmt_mult_big = fix.FixFmt(True, fmt_mult_full.int_bits + 1, fmt_mult_full.frac_bits + 1)
 
-        
+        # create integer expected results for multiplication
+        int_mult_full = self.test_a_int * self.test_b_int
+
+        # *** create expected results (emulate saturation overflow)
+        exp_mult_full_int = np_and(int_mult_full, fmt_mult_full.mask)
+        exp_mult_small_int = int_mult_full >> 3
+        exp_mult_small_int[exp_mult_small_int >= fmt_mult_small.maxvalue('int')] = \
+            fmt_mult_small.maxvalue('int')
+        exp_mult_small_int[exp_mult_small_int <= fmt_mult_small.minvalue('int')] = \
+            fmt_mult_small.minvalue('int')
+        exp_mult_big_int = np_and(int_mult_full << 1, fmt_mult_big.mask)
+
+        # verify (compare integer version for simplicity)
+        np.testing.assert_array_equal(self.test_a_fix.mult(self.test_b_fix).intfmt, exp_mult_full_int,
+                                      err_msg='[FULL] Wrong multiplication result')
+        np.testing.assert_array_equal(self.test_a_fix.mult(self.test_b_fix, out_fmt=fmt_mult_small,
+                                                           out_rnd="Floor", out_over="Sat").intfmt,
+                                      exp_mult_small_int,
+                                      err_msg='[SMALL] Wrong multiplication result', verbose=True)
+        np.testing.assert_array_equal(self.test_a_fix.mult(self.test_b_fix, out_fmt=fmt_mult_big,
+                                                           out_rnd="NonSymNeg", out_over="Sat").intfmt,
+                                      exp_mult_big_int,
+                                      err_msg='[BIG] Wrong multiplication result')
+
+        # verify full format is as expected
+        self.assertEqual(self.test_a_fix.mult(self.test_b_fix).fmt.tuplefmt, fmt_mult_full.tuplefmt)
 
     def test_logic_operations(self):
-        """Test FixNum logic operations."""
+        """DESCR: Test FixNum logic operations."""
 
         pass
 

@@ -134,8 +134,7 @@ class FixFmt:
         # ensure the given fmt is correct
         _fmt = gu.check_enum(fmt, EFormat)
         minvalue_int = -2**(self.bit_length-1) if self.signed else 0
-        # if self.signed:
-        #     return -2**(self.bit_length-1)/2**self.frac_bits
+
         return self._minmaxvalueformatter(minvalue_int, _fmt)
 
     @property
@@ -210,7 +209,7 @@ class FixNum:
         self._index = 0         # for generator feature
 
         # internal constants
-        self.to_int_coeff = 2**self.fmt.frac_bits  # to integer representation coefficient
+        self._to_int_coeff = 2**self.fmt.frac_bits  # to integer representation coefficient
         self._fix_size_mask = (1 << self.fmt.bit_length)-1  # correct representation
 
         # always cast to np.float64
@@ -218,10 +217,10 @@ class FixNum:
             # turn into array
             self.value, self.shape = self._to_array(value)
             # round and overflow process in int format
-            self.value = self._over(self._round(self.value*self.to_int_coeff))
+            self.value = self._over(self._round(self.value*self._to_int_coeff))
 
             # back to float
-            self.value = self.value/self.to_int_coeff
+            self.value = self.value/self._to_int_coeff
 
         except ValueError:
             print('Wrong input value type, only numeric list/np.arrays are allowed')
@@ -411,10 +410,10 @@ class FixNum:
     def __setitem__(self, idx, repleace_value):
         if isinstance(repleace_value, FixNum):
             self.value[idx] = self._over(self._round(
-                self._to_array(repleace_value.value)[0]*self.to_int_coeff))/self.to_int_coeff
+                self._to_array(repleace_value.value)[0]*self._to_int_coeff))/self._to_int_coeff
         else:
             self.value[idx] = self._over(self._round(
-                self._to_array(repleace_value)[0]*self.to_int_coeff))/self.to_int_coeff
+                self._to_array(repleace_value)[0]*self._to_int_coeff))/self._to_int_coeff
 
     def __len__(self):
         return self.shape
@@ -438,7 +437,7 @@ class FixNum:
         """x + y --> x.__add__(y)"""
 
         tmp_val = self.value + other.value
-        tmp_fmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
+        tmp_fmt = FixFmt(self.fmt.signed or other.fmt.signed,
                          max(self.fmt.int_bits, other.fmt.int_bits)+1,
                          max(self.fmt.frac_bits, other.fmt.frac_bits))
         if (self.rnd != other.rnd) or (self.over != other.over):
@@ -512,8 +511,7 @@ class FixNum:
         tmp_val = self.value * other.value
         tmp_sign = max(self.fmt.signed, other.fmt.signed)
         tmp_fmt = FixFmt(tmp_sign,
-                         self.fmt.int_bits + other.fmt.int_bits + 1 if
-                         tmp_sign else self.fmt.int_bits + other.fmt.int_bits,
+                         self.fmt.int_bits + other.fmt.int_bits,
                          self.fmt.frac_bits + other.fmt.frac_bits)
         if (self.rnd != other.rnd) or (self.over != other.over):
             print('_WARNING_: operators have round and / or overflow methods ' +
@@ -542,8 +540,7 @@ class FixNum:
         tmp_val = self.value * other.value
         tmp_sign = max(self.fmt.signed, other.fmt.signed)
         tmp_fmt = FixFmt(tmp_sign,
-                         self.fmt.int_bits + other.fmt.int_bits + 1 if
-                         tmp_sign else self.fmt.int_bits + other.fmt.int_bits,
+                         self.fmt.int_bits + other.fmt.int_bits,
                          self.fmt.frac_bits + other.fmt.frac_bits) if out_fmt is None else out_fmt
         return FixNum(tmp_val, tmp_fmt, out_rnd, out_over)
 
@@ -573,7 +570,7 @@ class FixNum:
 
 # private methods
 def _bin2fixstring(value, out_length):
-    """Convert a number to bin with leading zeros."""
+    """Convert a number to bin format with leading zeros."""
 
     value_bin_no_prefix = bin(value)[2:]
 
