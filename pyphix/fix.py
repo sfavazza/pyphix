@@ -432,6 +432,39 @@ class FixNum:
         return ret
 
     # # operators
+    @staticmethod
+    def _op_out_casting(op, other, out_fmt=None, out_rnd="SymZero", out_over="Wrap"):
+        """Decorator to cast operation output."""
+
+        # def decorator(*args, **kwargs):
+        #     tmp_fix = operator(*args, **kwargs)
+        #     tmp_fmt = tmp_fix.fmt if kwargs['out_fmt'] is None else kwargs['out_fmt']
+        #     return tmp_fix.change_fix(tmp_fmt, kwargs['out_rnd'], kwargs['out_over'])
+
+        # return decorator
+
+        """Implement format and fimath casting on defualt operations.
+
+        :param op: operation function name (__add__, __sub__, etc...).
+        :param other: fix-point object.
+        :param out_fmt: optional format operation result can be casted to.
+        :param out_rnd: round method adopted on result (default ```SymZero```).
+        :param out_over: overflow method adopted on result (default ```Wrap```).
+
+        :type op: method
+        :type other: FixNum
+        :type out_fmt: FixFmt
+        :type out_rnd: str
+        :type out_over: str
+
+        :return: addition result.
+        :rtype: FixNum"""
+
+        tmp_fix = op(other)
+        tmp_fmt = tmp_fix.fmt if out_fmt is None else out_fmt
+
+        return tmp_fix.change_fix(tmp_fmt, out_rnd, out_over)
+
     # ## Addition methods
     def __add__(self, other):
         """x + y --> x.__add__(y)"""
@@ -445,7 +478,8 @@ class FixNum:
                   'not equal, those of first operator will be considered')
         return FixNum(tmp_val, tmp_fmt, self.rnd, self.over)
 
-    def add(self, other, out_fmt=None, out_rnd="SymZero", out_over="Wrap"):
+    # @_op_out_casting
+    def add(self, *args, **kwargs):
         """Addition method.
 
         It allows to decide the output format.
@@ -464,16 +498,12 @@ class FixNum:
         :return: addition result.
         :rtype: FixNum"""
 
-        tmp_val = self.value + other.value
-        tmp_fmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                         max(self.fmt.int_bits, other.fmt.int_bits)+1,
-                         max(self.fmt.frac_bits, other.fmt.frac_bits)) if out_fmt is None else out_fmt
-        return FixNum(tmp_val, tmp_fmt, out_rnd, out_over)
+        return self._op_out_casting(self.__add__, *args, **kwargs)
 
     # ## Subtraction methods
     def __sub__(self, other):
         tmp_val = self.value - other.value
-        tmp_fmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
+        tmp_fmt = FixFmt(self.fmt.signed or other.fmt.signed,
                          max(self.fmt.int_bits, other.fmt.int_bits)+1,
                          max(self.fmt.frac_bits, other.fmt.frac_bits))
         if (self.rnd != other.rnd) or (self.over != other.over):
@@ -481,7 +511,7 @@ class FixNum:
                   'not equal, those of first operator will be considered')
         return FixNum(tmp_val, tmp_fmt, self.rnd, self.over)
 
-    def sub(self, other, out_fmt=None, out_rnd="SymZero", out_over="Wrap"):
+    def sub(self, *args, **kwargs):
         """Subtraction method.
 
         It allows to decide output format.
@@ -500,11 +530,7 @@ class FixNum:
         :return: operation result.
         :rtype: FixNum"""
 
-        tmp_val = self.value - other.value
-        tmp_fmt = FixFmt(max(self.fmt.signed, other.fmt.signed),
-                         max(self.fmt.int_bits, other.fmt.int_bits)+1,
-                         max(self.fmt.frac_bits, other.fmt.frac_bits)) if out_fmt is None else out_fmt
-        return FixNum(tmp_val, tmp_fmt, out_rnd, out_over)
+        return self._op_out_casting(self.__sub__, *args, **kwargs)
 
     # ## Multiplication methods
     def __mul__(self, other):
@@ -518,7 +544,7 @@ class FixNum:
                   'not equal, those of first operator will be considered')
         return FixNum(tmp_val, tmp_fmt, self.rnd, self.over)
 
-    def mult(self, other, out_fmt=None, out_rnd="SymZero", out_over="Wrap"):
+    def mult(self, *args, **kwargs):
         """Multiplication method.
 
         It allows to decide output format.
@@ -537,12 +563,7 @@ class FixNum:
         :return: operation result.
         :rtype: FixNum"""
 
-        tmp_val = self.value * other.value
-        tmp_sign = max(self.fmt.signed, other.fmt.signed)
-        tmp_fmt = FixFmt(tmp_sign,
-                         self.fmt.int_bits + other.fmt.int_bits,
-                         self.fmt.frac_bits + other.fmt.frac_bits) if out_fmt is None else out_fmt
-        return FixNum(tmp_val, tmp_fmt, out_rnd, out_over)
+        return self._op_out_casting(self.__mul__, *args, **kwargs)
 
     # ## Negation method
     def __neg__(self):
