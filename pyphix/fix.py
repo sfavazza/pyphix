@@ -204,8 +204,8 @@ class FixNum:
 
         # init instance members
         self.fmt = gu.check_args(fmt, FixFmt)
-        self.rnd = gu.check_args(rnd, str)
-        self.over = gu.check_args(over, str)
+        self.rnd = gu.check_enum(rnd, ERoundMethod)
+        self.over = gu.check_enum(over, EOverMethod)
         self._index = 0         # for generator feature
 
         # internal constants
@@ -269,30 +269,30 @@ class FixNum:
         :rtype: numpy.ndarray
         """
 
-        if self.rnd is "SymInf":
+        if self.rnd is ERoundMethod.SYM_INF:
             value[value > 0] += .5
             value[value < 0] -= .5
-        elif self.rnd is "SymZero":
+        elif self.rnd is ERoundMethod.SYM_ZERO:
             value[value > 0] += .4
             value[value < 0] -= .4
-        elif self.rnd is "NonSymPos":
+        elif self.rnd is ERoundMethod.NON_SYM_POS:
             value[value > 0] += .5
             value[value < 0] -= .4
-        elif self.rnd is "NonSymNeg":
+        elif self.rnd is ERoundMethod.NON_SYM_NEG:
             value[value > 0] += .4
             value[value < 0] -= .5
-        elif self.rnd in ["ConvEven", "ConvOdd"]:
+        elif self.rnd in [ERoundMethod.CONV_EVEN, ERoundMethod.CONV_ODD]:
             even_sel, odd_sel = value.astype(int) % 2 == 0, value.astype(int) % 2 != 0
             # even
-            value[np.logical_and(even_sel, value > 0)] += .4 if self.rnd is "ConvEven" else .5
-            value[np.logical_and(even_sel, value < 0)] -= .4 if self.rnd is "ConvEven" else .5
+            value[np.logical_and(even_sel, value > 0)] += .4 if self.rnd is ERoundMethod.CONV_EVEN else .5
+            value[np.logical_and(even_sel, value < 0)] -= .4 if self.rnd is ERoundMethod.CONV_EVEN else .5
             # odd
-            value[np.logical_and(odd_sel, value > 0)] += .5 if self.rnd is "ConvEven" else .4
-            value[np.logical_and(odd_sel, value < 0)] -= .5 if self.rnd is "ConvEven" else .4
-        elif self.rnd is "Floor":
+            value[np.logical_and(odd_sel, value > 0)] += .5 if self.rnd is ERoundMethod.CONV_EVEN else .4
+            value[np.logical_and(odd_sel, value < 0)] -= .5 if self.rnd is ERoundMethod.CONV_EVEN else .4
+        elif self.rnd is ERoundMethod.FLOOR:
             # round to the previous largest
             value = np.floor(value)
-        elif self.rnd is "Ceil":
+        elif self.rnd is ERoundMethod.CEIL:
             # round to the next smallest
             value = np.ceil(value)
         else:
@@ -310,11 +310,11 @@ class FixNum:
         :return: overflowed value.
         :rtype: numpy.ndarray or float"""
 
-        if self.over is "Sat":
+        if self.over is EOverMethod.SAT:
             value = np.maximum(
                 np.minimum(value, self.fmt.maxvalue(fmt=EFormat.INT)),
                 self.fmt.minvalue(fmt=EFormat.INT))
-        elif self.over is "Wrap":
+        elif self.over is EOverMethod.WRAP:
             # selection masks
             high_bit_mask = (1 << (self.fmt.bit_length-1))
             # pos / neg selector
@@ -478,7 +478,6 @@ class FixNum:
                   'not equal, those of first operator will be considered')
         return FixNum(tmp_val, tmp_fmt, self.rnd, self.over)
 
-    # @_op_out_casting
     def add(self, *args, **kwargs):
         """Addition method.
 
@@ -535,8 +534,7 @@ class FixNum:
     # ## Multiplication methods
     def __mul__(self, other):
         tmp_val = self.value * other.value
-        tmp_sign = max(self.fmt.signed, other.fmt.signed)
-        tmp_fmt = FixFmt(tmp_sign,
+        tmp_fmt = FixFmt(self.fmt.signed or other.fmt.signed,
                          self.fmt.int_bits + other.fmt.int_bits,
                          self.fmt.frac_bits + other.fmt.frac_bits)
         if (self.rnd != other.rnd) or (self.over != other.over):
