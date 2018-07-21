@@ -155,6 +155,9 @@ class FixFmt:
 
         return [self.signed, self.int_bits, self.frac_bits]
 
+    def __contains__(self, elem):
+        return self.minvalue() <= elem <= self.maxvalue()
+
 
 class FixNum:
     """Fixed point number class

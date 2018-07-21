@@ -16,12 +16,16 @@ class TestFixFmtMethods(utst.TestCase):
     CONVERT_TO_INT = 4
     fmt = fix.FixFmt(True, 21, CONVERT_TO_INT)
 
-    def test_properties(self):
-        """Test FixFmt properties."""
+    def test_bit_length(self):
+        """DESCR: Test bit length."""
 
         # bit number
         self.assertEqual(self.fmt.bit_length,
                          self.fmt.int_bits + self.fmt.frac_bits + int(self.fmt.signed))
+
+    def test_minmax(self):
+        """DESCR: Test min max and range."""
+
         # max
         exp_max_float = 2**self.fmt.int_bits - 2**(-self.fmt.frac_bits)
         exp_max_int = int(exp_max_float*2**self.CONVERT_TO_INT)
@@ -45,10 +49,23 @@ class TestFixFmtMethods(utst.TestCase):
         # range
         self.assertTrue(isinstance(self.fmt.fixrange, tuple))
         self.assertEqual(self.fmt.fixrange, (exp_min_float, exp_max_float))
+
+    def test_formats(self):
+        """DESCR: Test the formats."""
+
         # tuple
         self.assertTrue(isinstance(self.fmt.tuplefmt, tuple))
         # list
         self.assertTrue(isinstance(self.fmt.listfmt, list))
+
+    def test_inclusion(self):
+        """DESCR: Test inclusion of values in representable range."""
+
+        self.assertTrue(0 in self.fmt)
+        self.assertFalse(2**self.fmt.int_bits+1 in self.fmt)
+        # ensure the range limits are included
+        self.assertTrue(self.fmt.maxvalue() in self.fmt)
+        self.assertTrue(self.fmt.minvalue() in self.fmt)
 
 
 if __name__ == '__main__':

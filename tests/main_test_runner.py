@@ -27,7 +27,11 @@ def test_suite_fixfmt():
     test_suite = utst.TestSuite()
 
     # add tests
-    test_suite.addTest(t_fmt.TestFixFmtMethods('test_properties'))
+    for test_name in ['test_bit_length',
+                      'test_minmax',
+                      'test_formats',
+                      'test_inclusion']:
+        test_suite.addTest(t_fmt.TestFixFmtMethods(test_name))
 
     return test_suite
 
