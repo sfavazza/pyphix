@@ -75,11 +75,11 @@ class FixFmt:
         >>> from pyphix import fix
         >>> fmt = fix.FixFmt(True, 2, 3)
         >>> bin(fmt.mask)
-            '0b111111'
+        '0b111111'
 
         >>> fmt = fix.FixFmt(False, 1, 12)
         >>> bin(fmt.mask)
-            '0b1111111111111"""
+        '0b1111111111111'"""
 
         return 2**self.bit_length-1
 

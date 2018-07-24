@@ -5,3 +5,8 @@ __pycache__
 # sphinx
 html
 doctrees
+
+# python packager
+build
+dist
+*.egg*
