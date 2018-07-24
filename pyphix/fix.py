@@ -72,14 +72,15 @@ class FixFmt:
         """Return mask to limit number representation (bit_length*ones).
 
         Ex:
+
         >>> from pyphix import fix
         >>> fmt = fix.FixFmt(True, 2, 3)
         >>> bin(fmt.mask)
-        '0b111111'
+            '0b111111'
 
         >>> fmt = fix.FixFmt(False, 1, 12)
         >>> bin(fmt.mask)
-        '0b1111111111111'"""
+            '0b1111111111111'"""
 
         return 2**self.bit_length-1
 
@@ -437,15 +438,6 @@ class FixNum:
     # # operators
     @staticmethod
     def _op_out_casting(op, other, out_fmt=None, out_rnd="SymZero", out_over="Wrap"):
-        """Decorator to cast operation output."""
-
-        # def decorator(*args, **kwargs):
-        #     tmp_fix = operator(*args, **kwargs)
-        #     tmp_fmt = tmp_fix.fmt if kwargs['out_fmt'] is None else kwargs['out_fmt']
-        #     return tmp_fix.change_fix(tmp_fmt, kwargs['out_rnd'], kwargs['out_over'])
-
-        # return decorator
-
         """Implement format and fimath casting on defualt operations.
 
         :param op: operation function name (__add__, __sub__, etc...).
@@ -484,6 +476,8 @@ class FixNum:
     def add(self, *args, **kwargs):
         """Addition method.
 
+        *Usage: add(other, out_fmt=None, out_rnd="SymZero", out_over="Wrap")*
+
         It allows to decide the output format.
         If not indicated, full-precision format will be adopted.
 
@@ -516,6 +510,8 @@ class FixNum:
     def sub(self, *args, **kwargs):
         """Subtraction method.
 
+        *Usage: sub(other, out_fmt=None, out_rnd="SymZero", out_over="Wrap")*
+
         It allows to decide output format.
         If not indicated, full-precision format will be adopted.
 
@@ -547,6 +543,8 @@ class FixNum:
 
     def mult(self, *args, **kwargs):
         """Multiplication method.
+
+        *Usage: mult(other, out_fmt=None, out_rnd="SymZero", out_over="Wrap")*
 
         It allows to decide output format.
         If not indicated, full-precision format will be adopted.

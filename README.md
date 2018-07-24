@@ -31,7 +31,7 @@ pyPhix is an open source python module released under the terms of
 
 ### Fix Format
 
-This object is used to indicate the number of bits the user want to use for value reprensetation.
+This object is used to indicate the number of bits the user wants to use for value reprensetation.
 
 Create fix-point format objets:
 ```
@@ -47,6 +47,12 @@ Print the maximum representable ranges and test if a value is included in the ra
 
 >>> fmt_b.fixrange
 (0.0, 0.9921875)
+
+>>> -10 in fmt_a
+False
+
+>>> 0 in fmt_b
+True
 ```
 
 Different representations are available:
@@ -103,7 +109,7 @@ Perform a full resolution addition:
   over: EOverMethod.WRAP
 ```
 
-Perform a multiplication and cast result to a small format
+Perform a multiplication and cast result to a small format:
 ```
 >>> fix_val.mult(
         fix_vec, out_fmt=fix.FixFmt(False, 3, 2),
