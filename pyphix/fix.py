@@ -60,12 +60,12 @@ class FixFmt:
         self.frac_bits = gu.check_args(frac_bits, int)
 
     def __str__(self):
-        return f"({self.signed}, {self.int_bits}, {self.frac_bits})"
+        return "(%s, %s, %s)" % (self.signed, self.int_bits, self.frac_bits)
 
     def __repr__(self):
-        return f"""{self.__str__()}
+        return """%s
 
-  <{gu.get_class_name(self)} at {hex(id(self))}>"""
+  <%s at %s>""" % (self.__str__(), gu.get_class_name(self), hex(id(self)))
 
     @property
     def mask(self):
@@ -390,17 +390,17 @@ class FixNum:
     # data model
     # # representation
     def __str__(self):
-        return f"""
-{self.value}
+        return """
+%s
 
-  fmt: {self.fmt}
-  rnd: {self.rnd}
-  over: {self.over}"""
+  fmt: %s
+  rnd: %s
+  over: %s""" % (self.value, self.fmt, self.rnd, self.over)
 
     def __repr__(self):
-        return f"""{self.__str__()}
+        return """%s
 
-  <{gu.get_class_name(self)} at {hex(id(self))}>"""
+  <%s at %s>""" % (self.__str__(), gu.get_class_name(self), hex(id(self)))
 
     # # container methods
     def __contains__(self, elem):

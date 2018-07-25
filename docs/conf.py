@@ -87,7 +87,7 @@ pygments_style = 'sphinx'
 #
 # source: http://www.sphinx-doc.org/en/master/theming.html#builtin-themes
 #
-html_theme = 'haiku'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
