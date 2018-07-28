@@ -83,7 +83,8 @@ def check_enum(argument, exp_enum):
     try:
         return exp_enum(argument)
     except ValueError:
-        raise ValueError(f"Wrong argument type. Given argument '{argument}' cannot be casted to '{exp_enum}'")
+        raise ValueError(
+            "Wrong argument type. Given argument '%s' cannot be casted to '%s'" % (argument, exp_enum))
 
 
 def check_args(argument, exp_type):
@@ -110,7 +111,8 @@ def check_args(argument, exp_type):
     if isinstance(argument, tuple(type_list)):
         return argument
     else:
-        raise ValueError(f"Wrong argument type. Expected '{exp_type}' found '{type(argument)}'")
+        raise ValueError(
+            "Wrong argument type. Expected '%s' found '%s'" % (exp_type, type(argument)))
 
 
 def check_args_list(argument, iterable_type, exp_item_type):

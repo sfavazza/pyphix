@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyPhix",
-    version="0.0",
+    version="0.1",
     author="Samuele Favazza",
     author_email="sfavazza.github@gmail.com",
     description="The Python Fixed Point module",
@@ -13,6 +13,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
+    install_requires=[
+        'numpy',
+    ],
     classifiers=(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

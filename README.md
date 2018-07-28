@@ -27,6 +27,24 @@ pyPhix is an open source python module released under the terms of
 **NumPy** is the fundamental package needed for scientific computing with Python and it is released under these
 [terms](https://github.com/numpy/numpy/blob/master/LICENSE.txt "Numpy license").
 
+## Install
+
+The **pyPhix** package is available on [pypi.org](https://pypi.org/project/pyPhix).
+You can install it by running:
+
+```$ pip install pyphix```.
+
+Alternatively you can clone the **pyPhix** repository and from the folder containing the *setup.py* file run:
+
+```$ python setup install```
+
+This package requires Python 3.6 to work.
+
+You can also directly download the tar.gz archive from [pypi.org](https://pypi.org/project/pyPhix#files).
+The archive can be easily verified by adding the gpg public key
+[1E948096166391C0](https://pgp.mit.edu/pks/lookup?op=vindex&search=0x1E948096166391C0)
+to your keyring.
+
 ## Usage Examples
 
 ### Fix Format
