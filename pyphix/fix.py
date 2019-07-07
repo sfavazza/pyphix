@@ -1,15 +1,14 @@
-"""Module implementing fix-point arithmentic classes."""
-
-__author__ = "Samuele FAVAZZA"
-__copyright__ = "Copyright 2018, Samuele FAVAZZA"
-
 from enum import Enum
 
 import numpy as np
 from numpy import bitwise_and as np_and
 from numpy import bitwise_not as np_not
-
 from . import generalutil as gu
+
+__author__ = "Samuele FAVAZZA"
+__copyright__ = "Copyright 2018, Samuele FAVAZZA"
+
+"""Module implementing fix-point arithmentic classes."""
 
 
 class EFormat(Enum):
@@ -82,7 +81,7 @@ class FixFmt:
         >>> bin(fmt.mask)
             '0b1111111111111'"""
 
-        return 2**self.bit_length-1
+        return 2**self.bit_length - 1
 
     @property
     def bit_length(self):
@@ -108,7 +107,7 @@ class FixFmt:
             return hex(value & self.mask)
 
         if fmt is EFormat.FLOAT:
-            return value/2**self.frac_bits
+            return value / 2**self.frac_bits
 
         return value
 
@@ -124,8 +123,8 @@ class FixFmt:
 
         # ensure the given fmt is correct
         _fmt = gu.check_enum(fmt, EFormat)
-        maxvalue_int = (1 << (self.bit_length-1))-1 if self.signed else \
-                       (1 << (self.bit_length))-1
+        maxvalue_int = (1 << (self.bit_length - 1)) - 1 if self.signed else \
+                       (1 << (self.bit_length)) - 1
 
         return self._minmaxvalueformatter(maxvalue_int, _fmt)
 
@@ -134,7 +133,7 @@ class FixFmt:
 
         # ensure the given fmt is correct
         _fmt = gu.check_enum(fmt, EFormat)
-        minvalue_int = -2**(self.bit_length-1) if self.signed else 0
+        minvalue_int = -2**(self.bit_length - 1) if self.signed else 0
 
         return self._minmaxvalueformatter(minvalue_int, _fmt)
 
@@ -214,17 +213,17 @@ class FixNum:
 
         # internal constants
         self._to_int_coeff = 2**self.fmt.frac_bits  # to integer representation coefficient
-        self._fix_size_mask = (1 << self.fmt.bit_length)-1  # correct representation
+        self._fix_size_mask = (1 << self.fmt.bit_length) - 1  # correct representation
 
         # always cast to np.float64
         try:
             # turn into array
             self.value, self.shape = self._to_array(value)
             # round and overflow process in int format
-            self.value = self._over(self._round(self.value*self._to_int_coeff))
+            self.value = self._over(self._round(self.value * self._to_int_coeff))
 
             # back to float
-            self.value = self.value/self._to_int_coeff
+            self.value = self.value / self._to_int_coeff
 
         except ValueError:
             print('Wrong input value type, only numeric list/np.arrays are allowed')
